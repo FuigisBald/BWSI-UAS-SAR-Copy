@@ -112,7 +112,7 @@ def udp_request(
         print(f"Request socket error: {err}")
 
 
-def udp_receive(buffer_size=4096):
+def udp_receive(buffer_size=16384):
     """
     Receives a UDP message from the specified MRM IP address and port.
 
