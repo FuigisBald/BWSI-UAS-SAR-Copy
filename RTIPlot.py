@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import seaborn as sns
 
 #Speed of light 
 c = 299,792,458
@@ -21,10 +20,17 @@ intensity = np.array([[10, 15, 20, 25, 30, 25, 20, 15, 10, 5],
             [3, 8, 13, 18, 23, 18, 13, 8, 3, -2],
             [25, 30, 35, 40, 45, 40, 35, 30, 25, 20]])
 
-sns.heatmap(intensity)
+#Prints all elements of 3D array
+for i in range(len(ranges)):
+    for k in range(len(intensity[0])):
+        X=ranges[i]
+        Y = k
+        Z=intensity[i,k]
+        print(X, Y, Z)
+"""
+plt.imshow()
 plt.show()
 
-"""
 def convertToDecibles():
 
 def findIntensity():
