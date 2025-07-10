@@ -21,20 +21,19 @@ intensity = np.array([[10, 15, 20, 25, 30, 25, 20, 15, 10, 5],
             [25, 30, 35, 40, 45, 40, 35, 30, 25, 20]])
 arr = []
 #Prints all elements of 3D array
-for i in range(len(ranges)):
-    for k in range(len(intensity[0])):
-        X=ranges[i]
-        Y = k
-        Z=intensity[i,k]
-        arr.append([X, Y, Z])
+for i in range(10):
+    zist=[]
+    for j in range(10):
+        Z=intensity[i,j]
+        zist.append(Z)
+    arr.append(zist)    
 
 arr = np.array(arr)
-plt.imshow(arr)
-plt.show()
-"""
-plt.imshow()
+print(arr)
+plt.imshow(arr, aspect='equal')
 plt.show()
 
+"""
 def convertToDecibles():
 
 def findIntensity():
