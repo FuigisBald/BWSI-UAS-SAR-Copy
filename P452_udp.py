@@ -47,8 +47,8 @@ def udp_request(
     :param message_type: Type of the message.
     :param message_id: Unique tracking identifier for the message.
     :param node_id: Antenna ID.
-    :param scan_start: Start time for the scan (ps) relative to pulse transimition time.
-    :param scan_end: End time for the scan (ps) relative to pulse transimition time.
+    :param scan_start: Start time for the scan (ps) relative to pulse transmission time.
+    :param scan_end: End time for the scan (ps) relative to pulse transmission time.
     :param scan_resolution: Resolution of scan data (bins)
     :param BII: Log2 of the number of integrated samples.
     :param seg1_samples: Ignore
@@ -123,7 +123,7 @@ def udp_receive(buffer_size=16384):
     Receives a UDP message from the specified MRM IP address and port.
 
     :param buffer_size: Size of the buffer to receive data.
-    :return: Unpacked recieved data in a tuple, or None if an error occurs.
+    :return: Unpacked received data in a tuple, or None if an error occurs.
     :rtype: tuple or None
     """
 
@@ -149,7 +149,7 @@ def udp_receive(buffer_size=16384):
     try:
         data, addr = sock.recvfrom(buffer_size)
     except socket.error as err:
-        print(f"Recieve socket error: {err}")
+        print(f"Receive socket error: {err}")
         return None
 
     # Determine message type
@@ -167,7 +167,7 @@ def udp_receive(buffer_size=16384):
                 return None
             
     if message_type == "0xF10c": # Managing error message type 
-        print(f"Error message recieved: {data}: check documentation for correct message order.")
+        print(f"Error message received: {data}: check documentation for correct message order.")
         return None
 
     if message_type == "0xf201":
