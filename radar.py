@@ -1,0 +1,121 @@
+import P452_udp
+
+
+mrm_ip_addr = "192.168.1.100"
+port = 21210
+message_id = 2
+
+def setup(
+    node_id,
+    scan_start,
+    scan_end,
+    scan_resolution,
+    BII,
+    antenna_mode,
+    transmit_gain,
+    code_channel,
+    persist_flag,
+):
+    """
+    Sets and gets config request from P452 Radar to initiate.
+    :param mrm_ip_addr: IP address of the MRM.
+    :param mrm_ip_port: Port number of the MRM.
+    :param message_type: Type of the message.
+    :param message_id: Unique tracking identifier for the message.
+    :param node_id: Antenna ID.
+    :param scan_start: Start time for the scan (ps) relative to pulse transimition time.
+    :param scan_end: End time for the scan (ps) relative to pulse transimition time.
+    :param scan_resolution: Resolution of scan data (bins)
+    :param BII: Log2 of the number of integrated samples.
+    :param antenna_mode: Antenna mode (1: unknown, 2: unknown, 3: Transmit on A, Receive on B).
+    :param transmit_gain: Transmit gain 0-63, 63 being max FCC power.
+    :param code_channel: Coded UWB channel (0-10).
+    :param persist_flag: Write config to FLASH memory? (0: no, 1: yes).
+    """
+
+    P452_udp.udp_request(
+        mrm_ip_addr=mrm_ip_addr,
+        mrm_ip_port=port,
+        message_type=0x1001,
+        message_id=0,
+        node_id=node_id,
+        scan_start=scan_start,
+        scan_end=scan_end,
+        scan_resolution=scan_resolution,
+        BII=BII,
+        seg1_samples=0,
+        seg2_samples=0,
+        seg3_samples=0,
+        seg4_samples=0,
+        seg1_IM=0,
+        seg2_IM=0,
+        seg3_IM=0,
+        seg4_IM=0,
+        antenna_mode=antenna_mode,
+        transmit_gain=transmit_gain,
+        code_channel=code_channel,
+        persist_flag=persist_flag,
+    )
+
+    set_config_confirm = P452_udp.udp_receive()
+    if set_config_confirm[-1] != 0:
+        print(f"Error status recieved when setting configuration, see response: {set_config_confirm}")
+        return
+    else:
+        print(set_config_confirm)
+
+    P452_udp.udp_request(
+        mrm_ip_addr=mrm_ip_addr,
+        mrm_ip_port=port,
+        message_type=0x1002,
+        message_id=1,
+    )
+
+    get_config_confirm = P452_udp.udp_receive()
+    if get_config_confirm[-1] != 0:
+        print(f"Error status recieved when getting configuration, see response: {get_config_confirm}")
+        return
+    else:
+        print(get_config_confirm)
+
+def radar_control(
+        message_id, 
+        scan_count,
+        scan_interval
+):
+    """
+    desc here
+    """
+
+    P452_udp.udp_request(
+        mrm_ip_addr=mrm_ip_addr,
+        mrm_ip_port=port,
+        message_type=0x1003,
+        message_id=message_id,
+        scan_count=scan_count,
+        reserved=0,
+        scan_interval_time=scan_interval
+    )
+
+    control_confirm = P452_udp.udp_receive()
+    if control_confirm[-1] != 0:
+        print(f"Error status recieved when requesting control, see response: {control_confirm}")
+        return
+    else:
+        print("Requested radar control successfully.")
+
+    print(P452_udp.udp_receive())
+
+if __name__ == "__main__":
+    setup(
+        node_id=2,
+        scan_start=17578,
+        scan_end=50000,
+        scan_resolution=32,
+        BII=8,
+        antenna_mode=3,
+        transmit_gain=50,
+        code_channel=1,
+        persist_flag=0,
+    )
+    radar_control(message_id=message_id, scan_count=1, scan_interval=0)
