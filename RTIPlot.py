@@ -20,7 +20,7 @@ intensity = np.array([[10, 15, 20, 25, 30, 25, 20, 15, 10, 5],
             [3, 8, 13, 18, 23, 18, 13, 8, 3, -2],
             [25, 30, 35, 40, 45, 40, 35, 30, 25, 20]])
 arr = []
-#Prints all elements of 3D array
+#Prints all elements of 3D
 for i in range(10):
     zist=[]
     for j in range(10):
@@ -30,7 +30,11 @@ for i in range(10):
 
 arr = np.array(arr)
 print(arr)
+
 plt.imshow(arr, aspect='equal')
+plt.xticks(range(len(ranges)), ranges)
+plt.yticks(range(10))
+plt.colorbar()
 plt.show()
 
 """
