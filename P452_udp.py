@@ -96,7 +96,7 @@ def udp_request(
 
     # Filter out unused paramters (if value is None, it has not been set)
     used_params = [message_type, message_id]
-    format_string = "!HH"  # Base format for message type and ID
+    format_string = ">HH"  # Base format for message type and ID
     for param, frmt in all_message_specific_params:
         if param is not None:
             used_params.append(param)
@@ -123,21 +123,22 @@ def udp_receive(buffer_size=16384):
 
     # List format strings for each message type
     message_types_formats = [
-        (0x1101, "!HHI"),  # (message_type, format_string)
-        (0x1102, "!HHIii6H8BII"),
-        (0x1103, "!HHI"),
-        (0x1104, "!HHI"),
-        (0x1105, "!HHI"),
-        (0x1106, "!HHI"),
-        (0x1107, "!3HBBI"),
-        (0xF101, "!HHBBHBBH4BI4Bi32sI"),
-        (0xF102, "!HH"),
-        (0xF103, "!HHII"),
-        (0xF201, "!HH6Iiih4BHIHHi"),
-        (0x1201, "!704H"),
-        (0xF105, "!HHI"),
-        (0xF106, "!HHII"),
-        (0xF202, "!HH")
+        (0x1101, ">HHI"),  # (message_type, format_string)
+        (0x1102, ">HHIii6H8BII"),
+        (0x1103, ">HHI"),
+        (0x1104, ">HHI"),
+        (0x1105, ">HHI"),
+        (0x1106, ">HHI"),
+        (0x1107, ">3HBBI"),
+        (0xF101, ">HHBBHBBH4BI4Bi32sI"),
+        (0xF102, ">HH"),
+        (0xF103, ">HHII"),
+        (0xF201, ">HH6Iiih4BHIHHi"),
+        (0x1201, ">704H"),
+        (0xF105, ">HHI"),
+        (0xF106, ">HHII"),
+        (0xF202, ">HH")
+        # add error message type
     ]
 
     try:
@@ -147,19 +148,25 @@ def udp_receive(buffer_size=16384):
         return None
 
     # Determine message type
-    message_type = struct.unpack("!H", data[0:2])[0]
+    message_type = hex(struct.unpack(">H", data[0:2])[0])
     # Find the format string for the message type and unpack
     for msg_type, frmt in message_types_formats:
+        msg_type = hex(msg_type)
         if msg_type == message_type:
             try:
                 unpacked_data = struct.unpack(frmt, data)
+                unpacked_data = (message_type, *unpacked_data) # Convert message type to hex
                 return unpacked_data
             except struct.error as err:
                 print(f"Unpacking error: {err}")
                 return None
+    if message_type == 0xF10c: # Managing error message type 
+        print(f"Error message recieved: {data}: check documentation for correct message order.")
+        return None
 
 
 if __name__ == "__main__":
+    # Open socket on RPI
     host_ip_addr = "192.168.2.1"
     port = 21210
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -168,7 +175,24 @@ if __name__ == "__main__":
     udp_request(
         mrm_ip_addr="192.168.1.100",
         mrm_ip_port=21210,
-        message_type=0x1005,
+        message_type=0x1001,
         message_id=1,
+        node_id=2,
+        scan_start=0,
+        scan_end=50,
+        scan_resolution=250,
+        BII=8,
+        seg1_samples=0,
+        seg2_samples=0,
+        seg3_samples=0,
+        seg4_samples=0,
+        seg1_IM=0,
+        seg2_IM=0,
+        seg3_IM=0,
+        seg4_IM=0,
+        antenna_mode=3,
+        transmit_gain=50,
+        code_channel=1,
+        persist_flag=0
     )
     print(udp_receive())
