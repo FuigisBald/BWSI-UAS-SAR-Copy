@@ -142,8 +142,8 @@ def udp_receive(buffer_size=16384):
         (0x1201, ">704H"),
         (0xF105, ">HHI"),
         (0xF106, ">HHII"),
-        (0xF202, ">HH")
-        # add error message type
+        (0xF202, ">HH"),
+        (0xF201, ">HH6Iiih4BHIHH350i")
     ]
 
     try:
@@ -170,25 +170,6 @@ def udp_receive(buffer_size=16384):
         print(f"Error message received: {data}: check documentation for correct message order.")
         return None
 
-    if message_type == "0xf201": # Managing scan info message type
-        message_index = 0
-        total_messages = 1 # Sets temporary placeholder to enter while loop
-        amplitudes = [] # List to store scan data amplitudes
-
-        while message_index <= total_messages: # Loop until all messages are received
-            try:
-                unpacked_base_data = struct.unpack(">HH6Iiih4BHIHH", data[0:52]) # Unpack everything up to the scan data
-                unpacked_base_data = (message_type, *unpacked_base_data[1:]) # Convert message type to hex
-                unpacked_scan_data = struct.unpack(f"{unpacked_base_data[15]}i", data[52:]) # Unpack the scan data based on the number of samples
-                message_index += 1
-                total_messages = unpacked_base_data[18]
-                amplitudes.extend(unpacked_scan_data)
-
-            except struct.error as err:
-                print(f"Unpacking error: {err}")
-                return None
-        
-        return unpacked_base_data + (amplitudes, ) # Return base data and scan amplitudes
 
 if __name__ == "__main__":
     udp_request(

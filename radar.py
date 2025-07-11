@@ -116,12 +116,23 @@ def radar_control(
     scans_start_time = time.time()
 
     for scan_n in range(scan_count):
-        scan_info = P452_udp.udp_receive()
         scan_end_time = time.time()
-        scan_time = round(scans_start_time - scan_end_time, 1)
-        scans.append((scan_time, scan_info[-1]))
+        message_index = 0
+        total_messages = 2 # Placeholder to enter while loop
+        amplitudes = []
 
-    datetime = time.strftime('%Y-%m-%d %H-%M-%S', time.localtime())
+        while message_index + 1 < total_messages:
+            scan_info = P452_udp.udp_receive()
+            print(scan_info[:19])
+            message_index = scan_info[17]
+            total_messages = scan_info[18]
+            scan_data = scan_info[19:19+scan_info[15]]
+            amplitudes.extend(scan_data)
+
+        scan_time = round(scans_start_time - scan_end_time, 5)
+        scans.append((scan_time, amplitudes))
+
+    datetime = time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime())
 
     with open(f"scans-{datetime}.json", "w") as f:
         json.dump(scans, f, indent=4)
@@ -139,4 +150,4 @@ if __name__ == "__main__":
         code_channel=1,
         persist_flag=0,
     )
-    radar_control(message_id=message_id, scan_count=1, scan_interval=0)
+    radar_control(message_id=message_id, scan_count=100, scan_interval=10000)
