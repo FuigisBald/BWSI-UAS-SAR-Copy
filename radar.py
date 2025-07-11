@@ -141,8 +141,8 @@ def radar_control(
 if __name__ == "__main__":
     setup(
         node_id=2,
-        scan_start=300,
-        scan_end=35000,
+        scan_start=23349, #t = 2d/c
+        scan_end=66713, # Eventually, have the setup input just be 2 ranges
         scan_resolution=32,
         BII=9,
         antenna_mode=3,
@@ -150,4 +150,4 @@ if __name__ == "__main__":
         code_channel=1,
         persist_flag=0,
     )
-    radar_control(message_id=message_id, scan_count=500, scan_interval=20000)
+    radar_control(message_id=message_id, scan_count=1000, scan_interval=4000)
