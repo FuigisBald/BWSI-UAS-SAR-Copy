@@ -3,7 +3,7 @@ import P452_udp
 
 mrm_ip_addr = "192.168.1.100"
 port = 21210
-message_id = 2
+message_id = 2 # Message ID is originally 2 to account for the 2 setup messages.
 
 def setup(
     node_id,
@@ -36,7 +36,7 @@ def setup(
     P452_udp.udp_request(
         mrm_ip_addr=mrm_ip_addr,
         mrm_ip_port=port,
-        message_type=0x1001,
+        message_type=0x1001, # Set config request message
         message_id=0,
         node_id=node_id,
         scan_start=scan_start,
@@ -67,7 +67,7 @@ def setup(
     P452_udp.udp_request(
         mrm_ip_addr=mrm_ip_addr,
         mrm_ip_port=port,
-        message_type=0x1002,
+        message_type=0x1002, # Get config request message
         message_id=1,
     )
 
@@ -84,13 +84,19 @@ def radar_control(
         scan_interval
 ):
     """
-    desc here
+    Requests control of the radar to start scanning.
+
+    :param message_id: Unique tracking identifier for the message.
+    :param scan_count: Number of scans to perform.
+    :param scan_interval: Time between scans in microseconds.
+    :return: List of scan data amplitudes.
+    :rtype: list[int]
     """
 
     P452_udp.udp_request(
         mrm_ip_addr=mrm_ip_addr,
         mrm_ip_port=port,
-        message_type=0x1003,
+        message_type=0x1003, # Control request message
         message_id=message_id,
         scan_count=scan_count,
         reserved=0,
