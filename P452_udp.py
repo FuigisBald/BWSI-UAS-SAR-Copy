@@ -188,7 +188,7 @@ def udp_receive(buffer_size=16384):
                 print(f"Unpacking error: {err}")
                 return None
         
-        return amplitudes
+        return unpacked_base_data + (amplitudes, ) # Return base data and scan amplitudes
 
 if __name__ == "__main__":
     udp_request(

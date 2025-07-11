@@ -1,4 +1,6 @@
 import P452_udp
+import time
+import json
 
 
 mrm_ip_addr = "192.168.1.100"
@@ -110,17 +112,30 @@ def radar_control(
     else:
         print("Requested radar control successfully.")
 
-    print(P452_udp.udp_receive())
+    scans = []
+    scans_start_time = time.time()
+
+    for scan_n in range(scan_count):
+        scan_info = P452_udp.udp_receive()
+        scan_end_time = time.time()
+        scan_time = round(scans_start_time - scan_end_time, 1)
+        scans.append((scan_time, scan_info[-1]))
+
+    datetime = time.strftime('%Y-%m-%d %H-%M-%S', time.localtime())
+
+    with open(f"scans-{datetime}.json", "w") as f:
+        json.dump(scans, f, indent=4)
+
 
 if __name__ == "__main__":
     setup(
         node_id=2,
-        scan_start=17578,
-        scan_end=50000,
+        scan_start=300,
+        scan_end=35000,
         scan_resolution=32,
-        BII=8,
+        BII=9,
         antenna_mode=3,
-        transmit_gain=50,
+        transmit_gain=63,
         code_channel=1,
         persist_flag=0,
     )
