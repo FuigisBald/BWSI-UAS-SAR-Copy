@@ -1,8 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import json
-#Speed of light 
-c = 299,792,458*10^-12
 
 with open('scans-2024-06-26_23-07-29.json', 'r') as f:
     receivedData = json.load(f)
@@ -12,12 +10,12 @@ longTime = []
 for i in range (len(receivedData)):
     receivedAmplitude.append(receivedData[i][1])
     longTime.append(receivedData[i][0])
-4
+range = ((len(receivedData[0][1])*61+300)*299792458*(10e-13))/2
 
 #Converts the amplitude array into decibels
 db = 20 * np.log10(np.abs(receivedAmplitude))
 #Plots the data
-plt.imshow(db, aspect='auto', extent=(0, len(receivedData[0][1])*61+300, receivedData[0][0], (receivedData[-1][0])))
+plt.imshow(db, aspect='auto', extent=(0, range, receivedData[0][0], (receivedData[-1][0])))
 #plt.xticks(10, (len(receivedData[0][1]))*61+300)
 #plt.yticks(longTime)
 plt.colorbar()
