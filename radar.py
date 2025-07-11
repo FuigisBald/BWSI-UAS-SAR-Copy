@@ -123,13 +123,13 @@ def radar_control(
 
         while message_index + 1 < total_messages:
             scan_info = P452_udp.udp_receive()
-            print(scan_info[:19])
             message_index = scan_info[17]
             total_messages = scan_info[18]
             scan_data = scan_info[19:19+scan_info[15]]
             amplitudes.extend(scan_data)
 
-        scan_time = round(scans_start_time - scan_end_time, 5)
+
+        scan_time = round(scan_end_time - scans_start_time, 5)
         scans.append((scan_time, amplitudes))
 
     datetime = time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime())
@@ -150,4 +150,4 @@ if __name__ == "__main__":
         code_channel=1,
         persist_flag=0,
     )
-    radar_control(message_id=message_id, scan_count=100, scan_interval=10000)
+    radar_control(message_id=message_id, scan_count=500, scan_interval=20000)
