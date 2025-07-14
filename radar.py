@@ -79,8 +79,11 @@ def setup(
         return
     else:
         print(get_config_confirm)
+        return get_config_confirm[3], get_config_confirm[4] # Scan start and end times in ps
 
 def radar_control(
+        scan_start,
+        scan_end,
         message_id, 
         scan_count,
         scan_interval
@@ -134,12 +137,18 @@ def radar_control(
 
     datetime = time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime())
 
+    json_data = {
+        "scan_start": scan_start,
+        "scan_end": scan_end,
+        "scans": scans
+    }
+
     with open(f"scans-{datetime}.json", "w") as f:
-        json.dump(scans, f, indent=4)
+        json.dump(json_data, f, indent=4)
 
 
 if __name__ == "__main__":
-    setup(
+    scan_start, scan_end = setup(
         node_id=2,
         scan_start=23349, #t = 2d/c
         scan_end=66713, # Eventually, have the setup input just be 2 ranges
@@ -150,4 +159,4 @@ if __name__ == "__main__":
         code_channel=1,
         persist_flag=0,
     )
-    radar_control(message_id=message_id, scan_count=1000, scan_interval=4000)
+    radar_control(scan_start=scan_start, scan_end=scan_end, message_id=message_id, scan_count=1000, scan_interval=4000)
