@@ -29,7 +29,7 @@ db = 20 * np.log10(np.abs(scans))
 
 # Plots the data
 plt.imshow(
-    db, aspect="auto", extent=(range_start, range_end, long_time[-1], long_time[0]),
+    db, aspect="auto", extent=(0, range_end-range_start, long_time[-1], long_time[0]),
 )
 plt.colorbar()
 plt.show()
