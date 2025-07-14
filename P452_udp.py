@@ -2,6 +2,12 @@ import struct
 import socket
 
 
+# Open socket on RPI
+host_ip_addr = "192.168.2.1"
+port = 21210
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+sock.bind((host_ip_addr, port))
+
 def udp_request(
     mrm_ip_addr,  # MRM Info
     mrm_ip_port,  # MRM Info
@@ -26,12 +32,12 @@ def udp_request(
     code_channel=None,
     persist_flag=None,
     scan_count=None,
+    reserved=None,
     scan_interval_time=None,
     filter_mask=None,
     motion_filter=None,
     operational_mode=None,
-    sleep_mode=None,
-    reserved=None,
+    sleep_mode=None
 ):
     """
     Sends a UDP request message to the specified MRM IP address and port.
@@ -41,8 +47,8 @@ def udp_request(
     :param message_type: Type of the message.
     :param message_id: Unique tracking identifier for the message.
     :param node_id: Antenna ID.
-    :param scan_start: Start time for the scan (ps) relative to pulse transimition time.
-    :param scan_end: End time for the scan (ps) relative to pulse transimition time.
+    :param scan_start: Start time for the scan (ps) relative to pulse transmission time.
+    :param scan_end: End time for the scan (ps) relative to pulse transmission time.
     :param scan_resolution: Resolution of scan data (bins)
     :param BII: Log2 of the number of integrated samples.
     :param seg1_samples: Ignore
@@ -58,12 +64,12 @@ def udp_request(
     :param code_channel: Coded UWB channel (0-10).
     :param persist_flag: Write config to FLASH memory? (0: no, 1: yes).
     :param scan_count: Number of scans to perform (0: Stop, 1: Single Shot, 2-65534: Number of scans, 65535: Forever).
+    :param reserved: Reserved for future use (should be set to 0).
     :param scan_interval_time: Time between scans (us) (0: As fast as possible).
     :param filter_mask: Specifies filter operation (1: Raw, 2: Bandpass, 3: Motion, 8: Detection list)
     :param motion_filter: Motion filter Index (0-3). See documentation for details.
     :param operational_mode: Operational mode (1: MRM).
     :param sleep_mode: Sleep mode (0: Active, 1: Idle, 2: Standby Ethernet, 3: Standby Serial, 4: Sleep).
-    :param reserved: Reserved for future use (should be set to 0).
     """
 
     # Find used parameters and their format characters
@@ -86,12 +92,12 @@ def udp_request(
         (code_channel, "B"),
         (persist_flag, "B"),
         (scan_count, "H"),
+        (reserved, "H"),
         (scan_interval_time, "I"),
         (filter_mask, "H"),
         (motion_filter, "B"),
         (operational_mode, "I"),
-        (sleep_mode, "I"),
-        (reserved, "H"),
+        (sleep_mode, "I")
     ]
 
     # Filter out unused paramters (if value is None, it has not been set)
@@ -117,7 +123,7 @@ def udp_receive(buffer_size=16384):
     Receives a UDP message from the specified MRM IP address and port.
 
     :param buffer_size: Size of the buffer to receive data.
-    :return: Unpacked recieved data in a tuple, or None if an error occurs.
+    :return: Unpacked received data in a tuple, or None if an error occurs.
     :rtype: tuple or None
     """
 
@@ -133,18 +139,17 @@ def udp_receive(buffer_size=16384):
         (0xF101, ">HHBBHBBH4BI4Bi32sI"),
         (0xF102, ">HH"),
         (0xF103, ">HHII"),
-        (0xF201, ">HH6Iiih4BHIHHi"),
         (0x1201, ">704H"),
         (0xF105, ">HHI"),
         (0xF106, ">HHII"),
-        (0xF202, ">HH")
-        # add error message type
+        (0xF202, ">HH"),
+        (0xF201, ">HH6Iiih4BHIHH350i")
     ]
 
     try:
         data, addr = sock.recvfrom(buffer_size)
     except socket.error as err:
-        print(f"Recieve socket error: {err}")
+        print(f"Receive socket error: {err}")
         return None
 
     # Determine message type
@@ -155,23 +160,18 @@ def udp_receive(buffer_size=16384):
         if msg_type == message_type:
             try:
                 unpacked_data = struct.unpack(frmt, data)
-                unpacked_data = (message_type, *unpacked_data) # Convert message type to hex
+                unpacked_data = (message_type, *unpacked_data[1:]) # Convert message type to hex
                 return unpacked_data
             except struct.error as err:
                 print(f"Unpacking error: {err}")
                 return None
-    if message_type == 0xF10c: # Managing error message type 
-        print(f"Error message recieved: {data}: check documentation for correct message order.")
+            
+    if message_type == "0xF10c": # Managing error message type 
+        print(f"Error message received: {data}: check documentation for correct message order.")
         return None
 
 
 if __name__ == "__main__":
-    # Open socket on RPI
-    host_ip_addr = "192.168.2.1"
-    port = 21210
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind((host_ip_addr, port))
-
     udp_request(
         mrm_ip_addr="192.168.1.100",
         mrm_ip_port=21210,
