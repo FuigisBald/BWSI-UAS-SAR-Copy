@@ -9,7 +9,6 @@ message_id = 2 # Message ID is originally 2 to account for the 2 setup messages.
 
 def setup(
     node_id,
-    scan_start,
     scan_end,
     scan_resolution,
     BII,
@@ -17,6 +16,8 @@ def setup(
     transmit_gain,
     code_channel,
     persist_flag,
+    scan_start=20014, #3m offset,
+
 ):
     """
     Sets and gets config request from P452 Radar to initiate.
@@ -34,6 +35,9 @@ def setup(
     :param code_channel: Coded UWB channel (0-10).
     :param persist_flag: Write config to FLASH memory? (0: no, 1: yes).
     """
+
+    # Convert scan_end from m to ps
+    scan_end = int(scan_end * 2 * 1e12 / 299792458)
 
     P452_udp.udp_request(
         mrm_ip_addr=mrm_ip_addr,
@@ -150,8 +154,7 @@ def radar_control(
 if __name__ == "__main__":
     scan_start, scan_end = setup(
         node_id=2,
-        scan_start=23349, #t = 2d/c
-        scan_end=66713, # Eventually, have the setup input just be 2 ranges
+        scan_end=15, # Max range in m
         scan_resolution=32,
         BII=9,
         antenna_mode=3,
@@ -159,4 +162,4 @@ if __name__ == "__main__":
         code_channel=1,
         persist_flag=0,
     )
-    radar_control(scan_start=scan_start, scan_end=scan_end, message_id=message_id, scan_count=1000, scan_interval=4000)
+    radar_control(scan_start=scan_start, scan_end=scan_end, message_id=message_id, scan_count=100, scan_interval=4000)
