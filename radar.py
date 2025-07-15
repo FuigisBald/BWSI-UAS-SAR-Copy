@@ -162,4 +162,4 @@ if __name__ == "__main__":
         code_channel=1,
         persist_flag=0,
     )
-    radar_control(scan_start=scan_start, scan_end=scan_end, message_id=message_id, scan_count=100, scan_interval=4000)
+    radar_control(scan_start=scan_start, scan_end=scan_end, message_id=message_id, scan_count=1000, scan_interval=4000)
