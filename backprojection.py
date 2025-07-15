@@ -10,7 +10,7 @@ start_time = time.time()
 with open("5_point_scatter.pkl", "rb") as f:
     receivedData = pickle.load(f)
 
-data_set = receivedData.get("scan_data").real
+data_set = receivedData.get("scan_data")
 positions = receivedData.get("platform_pos")
 range_bins = receivedData.get("range_bins")
 
@@ -48,6 +48,7 @@ for z in range(len(positions)):
             added_amplitudes[k][j] += data_set[z][index]  # Adds the amplitude at the pixel coordinates for each frame
 
 back_projection_intensities = 20 * np.log10(np.abs(added_amplitudes))  # Convert to dB scale
+print(f"Processing time: {time.time() - start_time:.2f} seconds")
 
 #back_projection_intensities /= 200 # Normalize 
 plt.imshow(
