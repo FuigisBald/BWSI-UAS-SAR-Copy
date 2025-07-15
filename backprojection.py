@@ -8,14 +8,14 @@ from concurrent.futures import ProcessPoolExecutor
 with open("5_point_scatter.pkl", "rb") as f:
     receivedData = pickle.load(f)
 
-data_set = receivedData.get("scan_data").real
+data_set = receivedData.get("scan_data")
 positions = receivedData.get("platform_pos")
 range_bins = receivedData.get("range_bins")
 
 grid_resolution = (100, 100)  # In pixels, adjust as needed
-max_ranges = (-50, 50)  # In meters, adjust as needed
-r_res = max_ranges[0] / grid_resolution[0]  # Range resolution in meters
-c_res = max_ranges[1] / grid_resolution[1]  # Cross-range resolution
+max_ranges = (-6, 6)  # In meters, adjust as needed
+r_res = (max_ranges[1]-max_ranges[0]) / grid_resolution[0]  # Range resolution in meters
+c_res = (max_ranges[1]-max_ranges[0]) / grid_resolution[1]  # Cross-range resolution
 
 added_amplitudes = np.zeros(
     shape=(grid_resolution[0], grid_resolution[1])
@@ -23,13 +23,13 @@ added_amplitudes = np.zeros(
 
 def process_frame(frame_index):
     """Compute amplitude image for one frame index z."""
-    local_amplitudes = np.zeros((grid_resolution[0], grid_resolution[1]))
+    local_amplitudes = np.zeros((grid_resolution[0], grid_resolution[1]), dtype=complex)
     print(f"Processing frame {frame_index + 1}/{len(positions)}")
     for j in range(grid_resolution[0]):
         for k in range(grid_resolution[1]):
             pixel_coords_meters = (
-                j * c_res + (max_ranges[0] / 2),
-                k * r_res + (max_ranges[1] / 2),
+                k * r_res + max_ranges[0],
+                j * c_res + max_ranges[0],
             )  # Converts pixel coordinates to meters
             # Calculate the distance from the drone to the pixel coordinates
             distance = np.sqrt(
@@ -56,7 +56,7 @@ if __name__ == "__main__":
     #back_projection_intensities /= 200 # Normalize 
     plt.imshow(
         back_projection_intensities,
-        extent=(max_ranges[0] / 2, max_ranges[1] / 2, max_ranges[0] / 2, max_ranges[1] / 2),
+        extent=(max_ranges[0], max_ranges[1], max_ranges[0], max_ranges[1]),
         cmap="plasma",
         origin="lower",
     )
