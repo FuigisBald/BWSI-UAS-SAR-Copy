@@ -5,17 +5,18 @@ import time
 from concurrent.futures import ProcessPoolExecutor
 
 # Pulls data from file
-with open("5_point_scatter.pkl", "rb") as f:
+with open("marathon_18 (1).pkl", "rb") as f:
     receivedData = pickle.load(f)
 
 data_set = receivedData.get("scan_data")
 positions = receivedData.get("platform_pos")
 range_bins = receivedData.get("range_bins")
 
-grid_resolution = (100, 100)  # In pixels, adjust as needed
-max_ranges = (-6, 6)  # In meters, adjust as needed
-r_res = (max_ranges[1]-max_ranges[0]) / grid_resolution[0]  # Range resolution in meters
-c_res = (max_ranges[1]-max_ranges[0]) / grid_resolution[1]  # Cross-range resolution
+grid_resolution = (300, 300)  # In pixels, adjust as needed
+r_max_ranges = (-73.5, -78.5)  # In meters, adjust as needed
+c_max_ranges = (-112, -115)
+r_res = (r_max_ranges[1]-r_max_ranges[0]) / grid_resolution[0]  # Range resolution in meters
+c_res = (r_max_ranges[1]-r_max_ranges[0]) / grid_resolution[1]  # Cross-range resolution
 
 added_amplitudes = np.zeros(
     shape=(grid_resolution[0], grid_resolution[1])
@@ -28,8 +29,8 @@ def process_frame(frame_index):
     for j in range(grid_resolution[0]):
         for k in range(grid_resolution[1]):
             pixel_coords_meters = (
-                k * r_res + max_ranges[0],
-                j * c_res + max_ranges[0],
+                k * r_res + r_max_ranges[0],
+                j * c_res + c_max_ranges[0],
             )  # Converts pixel coordinates to meters
             # Calculate the distance from the drone to the pixel coordinates
             distance = np.sqrt(
@@ -56,8 +57,8 @@ if __name__ == "__main__":
     #back_projection_intensities /= 200 # Normalize 
     plt.imshow(
         back_projection_intensities,
-        extent=(max_ranges[0], max_ranges[1], max_ranges[0], max_ranges[1]),
-        cmap="plasma",
+        aspect = 'auto',
+        extent=(c_max_ranges[0], c_max_ranges[1], r_max_ranges[0], r_max_ranges[1]),
         origin="lower",
     )
     plt.colorbar(label="Intensity (dB)")
