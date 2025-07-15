@@ -3,7 +3,7 @@ import numpy as np
 import json
 
 #Pulls data from json file
-with open('scans-2025-07-11_16-35-23.json', 'r') as f:
+with open('scans-2025-07-11_19-12-38.json', 'r') as f:
     receivedData = json.load(f)
 
 #Sample data from deepseek transformed into how we will actually be receiving the data
