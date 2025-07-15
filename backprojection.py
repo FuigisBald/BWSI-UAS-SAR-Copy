@@ -44,17 +44,13 @@ added_amplitudes =  np.zeros(shape=(grid_resolution[0], grid_resolution[1]))
 for z in range(len(positions)):
     for j in range(grid_resolution[0]):
         for k in range(grid_resolution[1]):
-            distance = np.sqrt((positions[z][0]-j)**2 + (positions[z][1]-k)**2 + positions[z][2]**2)
-            for i in range (len(range_bins)):
-                if(range_bins[i] > distance):
-                    if(np.abs(range_bins[i-1] - distance) > np.abs(range_bins[i] - distance)):
-                        index = i-1
-                    else:
-                        index = i
-                    break
-            added_amplitudes[j][k] += data_set[z][index]
+            pixel_coords_meters = (j * c_res, k * r_res)
+            distance = np.sqrt((positions[z][0]-pixel_coords_meters[0])**2 + (positions[z][1]-pixel_coords_meters[1])**2 + positions[z][2]**2)
+            index = np.argmin(np.abs(range_bins - distance))
+            added_amplitudes[j][k] += db_set[z][index]
 
-plt.imshow(added_amplitudes)
+avg_amps = added_amplitudes/len(positions)
+plt.imshow(added_amplitudes, extent= (-100, 100, -100, 100))
 plt.show()
 
 # # RPI Plot
