@@ -5,7 +5,7 @@ import numpy as np
 #Pulls data from file
 with open('5_point_scatter.pkl', 'rb') as f:
     receivedData = pickle.load(f)
-print(receivedData)
+
 data_set = receivedData.get('scan_data')
 positions = receivedData.get('platform_pos')
 range_bins = receivedData.get('range_bins')
@@ -24,13 +24,13 @@ added_amplitudes =  np.zeros(shape=(grid_resolution[0], grid_resolution[1]))
 for z in range(len(positions)):
     for j in range(grid_resolution[0]):
         for k in range(grid_resolution[1]):
-            pixel_coords_meters = ((j* c_res-25)/1.5, (k * r_res+25)/1.5) #the second one changes x and the first changes y
+            pixel_coords_meters = (j* c_res+(max_ranges[0]/2), k * r_res+(max_ranges[1]/2)) #the second one changes x and the first changes y
             distance = np.sqrt((positions[z][0]-pixel_coords_meters[0])**2 + (positions[z][1]-pixel_coords_meters[1])**2 + positions[z][2]**2)
             index = np.argmin(np.abs(range_bins - distance))
-            added_amplitudes[j][k] += db_set[z][index]
+            added_amplitudes[k][j] += db_set[z][index]
 
 avg_amps = added_amplitudes/len(positions)
-plt.imshow(added_amplitudes)
+plt.imshow(added_amplitudes, extent = (max_ranges[0]/2, max_ranges[1]/2, max_ranges[0]/2,max_ranges[1]/2))
 plt.show()
 
 # # RPI Plot
