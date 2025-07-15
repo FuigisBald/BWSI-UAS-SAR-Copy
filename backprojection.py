@@ -5,18 +5,18 @@ import time
 from concurrent.futures import ProcessPoolExecutor
 
 # Pulls data from file
-with open("marathon_18 (1).pkl", "rb") as f:
+with open("marathon_21.pkl", "rb") as f:
     receivedData = pickle.load(f)
 
 data_set = receivedData.get("scan_data")
 positions = receivedData.get("platform_pos")
 range_bins = receivedData.get("range_bins")
 
-grid_resolution = (300, 300)  # In pixels, adjust as needed
-r_max_ranges = (-73.5, -78.5)  # In meters, adjust as needed
-c_max_ranges = (-112, -115)
+grid_resolution = (500, 500)  # In pixels, adjust as needed
+c_max_ranges = (-110, -80)  # x in meters, adjust as needed
+r_max_ranges = (15, 35)  # y in meters, adjust as needed
 r_res = (r_max_ranges[1]-r_max_ranges[0]) / grid_resolution[0]  # Range resolution in meters
-c_res = (r_max_ranges[1]-r_max_ranges[0]) / grid_resolution[1]  # Cross-range resolution
+c_res = (c_max_ranges[1]-c_max_ranges[0]) / grid_resolution[1]  # Cross-range resolution
 
 added_amplitudes = np.zeros(
     shape=(grid_resolution[0], grid_resolution[1])
