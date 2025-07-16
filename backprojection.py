@@ -5,16 +5,16 @@ import time
 from concurrent.futures import ProcessPoolExecutor
 
 # Pulls data from file
-with open("marathon_21.pkl", "rb") as f:
+with open("5_point_scatter.pkl", "rb") as f:
     receivedData = pickle.load(f)
 
 data_set = receivedData.get("scan_data")
 positions = receivedData.get("platform_pos")
 range_bins = receivedData.get("range_bins")
 
-grid_resolution = (500, 500)  # In pixels, adjust as needed
-c_max_ranges = (-110, -80)  # x in meters, adjust as needed
-r_max_ranges = (15, 35)  # y in meters, adjust as needed
+grid_resolution = (300, 300)  # In pixels, adjust as needed
+c_max_ranges = (-10, 10)  # x in meters, adjust as needed
+r_max_ranges = (-10, 10)  # y in meters, adjust as needed
 r_res = (r_max_ranges[1]-r_max_ranges[0]) / grid_resolution[0]  # Range resolution in meters
 c_res = (c_max_ranges[1]-c_max_ranges[0]) / grid_resolution[1]  # Cross-range resolution
 
@@ -38,8 +38,13 @@ def process_frame(frame_index):
                 (positions[frame_index][1] - pixel_coords_meters[1]) ** 2 + # Y Axis
                 positions[frame_index][2] ** 2 # Z Axis
             )
-            index = np.argmin(np.abs(range_bins - distance))  # Find index of the closest range bin
-            local_amplitudes[k][j] += data_set[frame_index][index]
+            lower_Index = 0
+            index = np.searchsorted(range_bins, distance) - 1 
+            if(index != 0):
+                lower_Index = index-1
+            percentage_there = (range_bins[index]-range_bins[lower_Index]) / (distance - range_bins[lower_Index]) #ex 0.42
+            amplitude = (1-percentage_there)*(data_set[frame_index][lower_Index]) + percentage_there*(data_set[frame_index][index])
+            local_amplitudes[k][j] += amplitude
     return local_amplitudes
 
 if __name__ == "__main__":
