@@ -37,12 +37,12 @@ def spline_regression(x, y, smoothing_factor=None):
 
     return spline
 
-xSpline = spline_regression(t, x)
-ySpline = spline_regression(t, y)
-zSpline = spline_regression(t, z)
+xSpline = spline_regression(t, x, 0.1)
+ySpline = spline_regression(t, y, 0.1)
+zSpline = spline_regression(t, z, 0.1)
 
 # # Make predictions
-tNew = np.linspace(min(t), max(t), 100)
+tNew = np.linspace(min(t), max(t), 10000)
 
 xNew = xSpline(tNew)
 yNew = ySpline(tNew)
