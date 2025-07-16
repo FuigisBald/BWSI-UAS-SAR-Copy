@@ -3,9 +3,15 @@ from mpl_toolkits.mplot3d import Axes3D
 from scipy.interpolate import UnivariateSpline
 import numpy as np
 import csv
+import pandas as pd
 
-# Example: skip the header row
-arr = np.genfromtxt('SARMotion.csv', delimiter=',', skip_header=1)
+df = pd.read_csv('SARMotion.csv')
+
+# Drop rows with any missing values
+df_clean = df.dropna()
+
+# If you want a NumPy array:
+arr = df_clean.to_numpy()
 
 t = arr[:, 0]
 x = arr[:, 1]
@@ -23,23 +29,10 @@ y += yOffset
 z += zOffset
 
 def spline_regression(x, y, smoothing_factor=None):
-    """
-    Fits a spline regression to the given x and y data.
 
-    Parameters:
-        x (list or array): list of x-values
-        y (list or array): list of y-values
-        smoothing_factor (float, optional): smoothing factor s.
-            If None, it will be estimated automatically.
-
-    Returns:
-        spline_func (function): a function that takes new x-values and returns the spline-predicted y-values.
-    """
-    # Convert to numpy arrays
     x = np.array(x)
     y = np.array(y)
 
-    # Fit spline
     spline = UnivariateSpline(x, y, s=smoothing_factor)
 
     return spline
@@ -48,21 +41,27 @@ xSpline = spline_regression(t, x)
 ySpline = spline_regression(t, y)
 zSpline = spline_regression(t, z)
 
-# Make predictions
-xNew = xSpline(t)
-yNew = ySpline(t)
-zNew = zSpline(t)
+# # Make predictions
+tNew = np.linspace(min(t), max(t), 100)
 
-print(xNew)
-print(yNew)
-print(zNew)
+xNew = xSpline(tNew)
+yNew = ySpline(tNew)
+zNew = zSpline(tNew)
 
-# Create a new figure and add a 3D subplot
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
+# # Create a new figure and add a 3D subplot
+# fig = plt.figure()
+# ax = fig.add_subplot(111, projection='3d')
 
-# Plot the 3D line
-ax.plot(x, y, z)
-ax.plot(xNew, yNew, zNew)
+# # Plot the 3D line
+# ax.plot(x, y, z)
+# ax.plot(xNew, yNew, zNew)
+
+plt.plot(t, x)
+plt.plot(t, y)
+plt.plot(t, z)
+
+plt.plot(tNew, xNew)
+plt.plot(tNew, yNew)
+plt.plot(tNew, zNew)
 
 plt.show()
