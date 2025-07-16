@@ -5,22 +5,25 @@ import time
 from concurrent.futures import ProcessPoolExecutor
 
 # Pulls data from file
-with open("C:/Users/thema/Downloads/marathon_18.pkl", "rb") as f:
+with open("C:/Users/thema/Downloads/marathon_21.pkl", "rb") as f:
     receivedData = pickle.load(f)
 
-data_set = receivedData.get("scan_data")
+data_set = (receivedData.get("scan_data"))
 positions = receivedData.get("platform_pos")
 range_bins = receivedData.get("range_bins")
 
-grid_resolution = (300, 300)  # In pixels, adjust as needed
-c_max_ranges = (-73, -79)  # x in meters, adjust as needed
-r_max_ranges = (-117, -112)  # y in meters, adjust as needed
-c_res = (c_max_ranges[1]-c_max_ranges[0]) / grid_resolution[1]  # Cross-range resolution
-r_res = (r_max_ranges[1]-r_max_ranges[0]) / grid_resolution[0]  # Range resolution in meters
+grid_resolution = (500, 500)  # In pixels, adjust as needed
+c_max_ranges = (15, 35)  # x in meters, adjust as needed
+r_max_ranges = (-106.7, -83.4)  # y in meters, adjust as needed
+# c_res = (c_max_range[1]-c_max_ranges[0]) / grid_resolution[1]  # Cross-range resolution
+# r_res = (r_max_ranges[1]-r_max_ranges[0]) / grid_resolution[0]  # Range resolution in meters
 
+# Create Cartesian coordinate grid w/ pixel values in meters
 x_coords = np.linspace(c_max_ranges[0], c_max_ranges[1], grid_resolution[1])
 y_coords = np.linspace(r_max_ranges[0], r_max_ranges[1], grid_resolution[0])
 x_grid, y_grid = np.meshgrid(x_coords, y_coords)
+
+window = np.hanning(len(positions)) # Define Hanning window to correct haloing
 
 added_amplitudes = np.zeros(shape=(grid_resolution[0], grid_resolution[1]), dtype=complex)  # Base array for adding up intensities
 
@@ -28,44 +31,46 @@ def process_frames_chunk(start, end):
     partial_frames = np.zeros(shape=(grid_resolution[0], grid_resolution[1]), dtype=complex)
 
     for i in range(start, end):
-        partial_frames += process_frame(i)
+        partial_frames += process_frame(i) # Sum up chunk of frames in subprocess
 
     return partial_frames
 
 def process_frame(frame_index):
     """Compute amplitude image for one frame index z."""
-    local_amplitudes = np.zeros((grid_resolution[0], grid_resolution[1]), dtype=complex)
     distances = np.sqrt(
         (positions[frame_index][0] - x_grid) ** 2 + # X Axis
         (positions[frame_index][1] - y_grid) ** 2 + # Y Axis
         positions[frame_index][2] ** 2 # Z Axis
     )
+    local_amplitudes = np.interp(distances, range_bins, data_set[frame_index]) # Linear interpolation
 
-    local_amplitudes = np.interp(distances, range_bins, data_set[frame_index])
-    return local_amplitudes
+    weighted_amplitudes = local_amplitudes * window[frame_index] # Window amplitudes with Hanning window
+    return weighted_amplitudes
 
 if __name__ == "__main__":
-    # Timer to track processing time
+    # Timer to track processing timex
     start_time = time.time()
 
     # Setting up multiprocessing
-
     num_processes = 12
     chunk_size = len(positions) // num_processes
     tasks = []
 
+    print("Starting backprocessing.")
     with ProcessPoolExecutor(max_workers=num_processes) as executor:
         for p in range(num_processes):
-           start = p * chunk_size
+           print(f"Spawned process {p+1}/{num_processes}")
+           start = p * chunk_size # Split up frames across subprocesses
            end = len(positions) if p == num_processes - 1 else (p + 1) * chunk_size
            tasks.append(executor.submit(process_frames_chunk, start, end))
 
-        partial_frames = [t.result() for t in tasks]
+        partial_frames = [t.result() for t in tasks] # Get back summed frames from each subprocess
 
     final_frames = np.sum(partial_frames, axis=0)
+    avg_final_frames = final_frames/len(positions)
     
-    back_projection_intensities = 20 * np.log10(np.abs(final_frames))  # Convert to dB scale
-    print(f"Processing time: {time.time() - start_time:.2f} seconds")
+    back_projection_intensities = 20 * np.log10(np.abs(avg_final_frames))  # Convert to dB scale
+    print(f"Finished processing in {time.time() - start_time:.2f}s.")
 
     #back_projection_intensities /= 200 # Normalize 
     plt.imshow(
@@ -73,6 +78,7 @@ if __name__ == "__main__":
         aspect = 'auto',
         extent=(c_max_ranges[0], c_max_ranges[1], r_max_ranges[0], r_max_ranges[1]),
         origin="lower",
+        #vmin=np.percentile(back_projection_intensities, 40)
     )
     plt.colorbar(label="Intensity (dB)")
     plt.title("Backprojection of Radar Data")
