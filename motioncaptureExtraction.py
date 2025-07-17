@@ -13,11 +13,14 @@ df_clean = df.dropna()
 # If you want a NumPy array:
 arr = df_clean.to_numpy()
 
+#Pulls data from csv
 t = arr[:, 0]
 x = arr[:, 1]
 y = arr[:, 3]
 z = arr[:, 2]
 
+
+#Manual offsets for back projection and RTI
 tOffset = 0
 xOffset = 0
 yOffset = 0
@@ -28,6 +31,7 @@ x += xOffset
 y += yOffset
 z += zOffset
 
+#Function that creates a spline or LOBF for data.
 def spline_regression(x, y, smoothing_factor=None):
 
     x = np.array(x)
@@ -37,12 +41,14 @@ def spline_regression(x, y, smoothing_factor=None):
 
     return spline
 
+#Creates splines for x y and z variables
 xSpline = spline_regression(t, x, 0.1)
 ySpline = spline_regression(t, y, 0.1)
 zSpline = spline_regression(t, z, 0.1)
 
-# # Make predictions
-tNew = np.linspace(min(t), max(t), 10000)
+
+# Makes 6000 estimates
+tNew = np.linspace(min(t), max(t), 6000)
 
 xNew = xSpline(tNew)
 yNew = ySpline(tNew)
@@ -56,12 +62,48 @@ zNew = zSpline(tNew)
 # ax.plot(x, y, z)
 # ax.plot(xNew, yNew, zNew)
 
-plt.plot(t, x)
-plt.plot(t, y)
-plt.plot(t, z)
+#Creates velocity splines using slope of the position splines
+dxSpline = xSpline.derivative()
+dySpline = ySpline.derivative()
+dzSpline = zSpline.derivative()
 
-plt.plot(tNew, xNew)
-plt.plot(tNew, yNew)
-plt.plot(tNew, zNew)
+dxNew = dxSpline(tNew)
+dyNew = dySpline(tNew)
+dzNew = dzSpline(tNew)
+
+
+#Function that finds overallVelocity based on new time
+def overallVelocity(timeNew):
+    return np.sqrt(np.power(dxSpline(timeNew),2)+np.power(dySpline(timeNew),2)+np.power(dzSpline(timeNew),2))
+
+# # Plots actual data
+# plt.plot(t, x)
+# plt.plot(t, y)
+# plt.plot(t, z)
+
+#Plots position splines
+plt.plot(tNew, xNew, color = 'red')
+plt.plot(tNew, yNew, color = 'blue')
+plt.plot(tNew, zNew, color = 'green')
+
+#Plots velocity splines 
+plt.plot(tNew, dxNew, color = 'red')
+plt.plot(tNew, dyNew, color = 'blue')
+plt.plot(tNew, dzNew, color = 'green')
+plt.plot(tNew, overallVelocity(tNew), color = 'black')
 
 plt.show()
+
+
+# # Uncompleted code to calculate the velocity between points on the spline but derivative probably faster
+# for i in range(len(tNew)-1):
+#     xVelocities.append((np.abs(xSpline(tNew[i+1])-xSpline(tNew[i])))/(tNew[i+1]-tNew[i]))
+#     print(np.abs(xSpline(tNew[i+1])-xSpline(tNew[i])))
+#     print(xVelocities[i])
+#     yVelocities.append((np.abs(ySpline(tNew[i+1])-ySpline(tNew[i])))/(tNew[i+1]-tNew[i]))
+#     #print((tNew[i+1]-tNew[i]))
+#     print(yVelocities[i])
+#     zVelocities.append((np.abs(zSpline(tNew[i+1])-zSpline(tNew[i])))/(tNew[i+1]-tNew[i]))
+#     print(zVelocities[i])
+#     overallVelocities.append(np.sqrt(pow(xVelocities[i],2)+pow(yVelocities[i],2)+pow(zVelocities[i],2)))
+#     print(overallVelocities)
