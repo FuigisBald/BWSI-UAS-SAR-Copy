@@ -13,6 +13,7 @@ scan_end = received_data["scan_end"]
 scans = []
 slow_time = []
 
+# loops through all the scans 
 for i, scan in enumerate(received_data["scans"]):
     amplitudes = []
     for j, amplitude in enumerate(scan[1]):
@@ -24,12 +25,12 @@ for i, scan in enumerate(received_data["scans"]):
 range_start = scan_start * 299792458 * (10e-13) / 2
 range_end = scan_end * 299792458 * (10e-13) / 2
 
-#Converts the amplitude array into decibels
+# Converts the amplitude array into decibels
 db = 20 * np.log10(np.abs(scans))
 
 # Plots the data
 plt.imshow(
-    db, aspect="auto", extent=(0, range_end-range_start, slow_time[-1], slow_time[0]), cmap="plasma"
+    db, aspect="auto", extent=(0, range_end-range_start, slow_time[-1], slow_time[0]), cmap="viridis"
 )
 plt.title("RTI")
 plt.xlabel("Range (m)")

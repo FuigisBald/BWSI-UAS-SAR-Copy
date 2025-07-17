@@ -72,7 +72,7 @@ if __name__ == "__main__":
     back_projection_intensities = 20 * np.log10(np.abs(avg_final_frames))  # Convert to dB scale
     print(f"Finished processing in {time.time() - start_time:.2f}s.")
 
-    #back_projection_intensities /= 200 # Normalize 
+    # generate backprojection
     plt.imshow(
         back_projection_intensities,
         aspect = 'auto',

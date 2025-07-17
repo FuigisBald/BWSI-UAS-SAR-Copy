@@ -122,6 +122,7 @@ def radar_control(
     scans = []
     scans_start_time = time.time()
 
+    #reads scan data
     for scan_n in range(scan_count):
         scan_end_time = time.time()
         message_index = 0
@@ -147,6 +148,7 @@ def radar_control(
         "scans": scans
     }
 
+    #creates json file of data
     with open(f"scans-{datetime}.json", "w") as f:
         json.dump(json_data, f, indent=4)
 
