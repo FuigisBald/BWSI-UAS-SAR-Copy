@@ -93,17 +93,3 @@ plt.plot(tNew, dzNew, color = 'green')
 plt.plot(tNew, overallVelocity(tNew), color = 'black')
 
 plt.show()
-
-
-# # Uncompleted code to calculate the velocity between points on the spline but derivative probably faster
-# for i in range(len(tNew)-1):
-#     xVelocities.append((np.abs(xSpline(tNew[i+1])-xSpline(tNew[i])))/(tNew[i+1]-tNew[i]))
-#     print(np.abs(xSpline(tNew[i+1])-xSpline(tNew[i])))
-#     print(xVelocities[i])
-#     yVelocities.append((np.abs(ySpline(tNew[i+1])-ySpline(tNew[i])))/(tNew[i+1]-tNew[i]))
-#     #print((tNew[i+1]-tNew[i]))
-#     print(yVelocities[i])
-#     zVelocities.append((np.abs(zSpline(tNew[i+1])-zSpline(tNew[i])))/(tNew[i+1]-tNew[i]))
-#     print(zVelocities[i])
-#     overallVelocities.append(np.sqrt(pow(xVelocities[i],2)+pow(yVelocities[i],2)+pow(zVelocities[i],2)))
-#     print(overallVelocities)
