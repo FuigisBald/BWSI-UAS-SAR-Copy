@@ -16,17 +16,13 @@ Branch Guide:
             - code to create backprojections from pickle files 
         -motioncaptureExtraction.py:
             - reads and plots motion capture data
-    udp_dev:
-        -used to develop code for communicating with radar/raspberry pi
-    rti_dev:
-        -used to write code to create a rti
-    rpi_radar_dev:
-        -used to collect data from the radar
-    backprojection_dev:
-        -used to create code for creating backprojections
-    backprojection_optimization:
-        -used to optimize backprojection code
-    motioncapture_dev:
-        -used to develop code to process motion capture data
+
+    udp_dev: used to develop code for communicating with radar/raspberry pi
+    rti_dev: used to write code to create a rti
+    rpi_radar_dev: used to collect data from the radar
+    backprojection_dev: used to create code for creating backprojections
+    backprojection_optimization: used to optimize backprojection code
+    motioncapture_dev: used to develop code to process motion capture data
+    gui_dev: used to develop code for visual interface
     
     
