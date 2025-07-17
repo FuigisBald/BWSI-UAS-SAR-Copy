@@ -81,15 +81,18 @@ def overallVelocity(timeNew):
 # plt.plot(t, y)
 # plt.plot(t, z)
 
-#Plots position splines
-plt.plot(tNew, xNew, color = 'red')
-plt.plot(tNew, yNew, color = 'blue')
-plt.plot(tNew, zNew, color = 'green')
+plt.plot(tNew, xNew, color = '#8B0000', label = "X position")
+plt.plot(tNew, yNew, color = 'blue', label = "Y position")
+plt.plot(tNew, zNew, color = 'green', label = "Z position")
 
 #Plots velocity splines 
-plt.plot(tNew, dxNew, color = 'red')
-plt.plot(tNew, dyNew, color = 'blue')
-plt.plot(tNew, dzNew, color = 'green')
-plt.plot(tNew, overallVelocity(tNew), color = 'black')
+plt.plot(tNew, dxNew, color = '#FF7276', label = "X velocity")
+plt.plot(tNew, dyNew, color = '#ADD8E6', label = "Y velocity")
+plt.plot(tNew, dzNew, color = '#90EE90', label = "Z velocity")
+plt.plot(tNew, overallVelocity(tNew), color = 'gray', label = "Overall Velocity")
+
+plt.xlabel("Time")
+plt.ylabel("Position/Velocity")
+plt.legend()
 
 plt.show()
