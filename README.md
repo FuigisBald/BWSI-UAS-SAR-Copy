@@ -6,7 +6,7 @@ Branch Guide:
         -includes all completed working code
         - P452_udp.py:
             - code for communicating with the radar/raspberry pi
-        - radar.py:
+        - radar_control.py:
             - collecting radar data and getting it on local computer as a json file
         -RTIPlot.py:
             - creates rti plots from json files

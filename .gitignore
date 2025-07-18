@@ -1,2 +1,3 @@
-scans-2025-07-11_19-11-03.json
-scans-2025-07-11_19-12-38.json
+*.json
+*.csv
+__pycache__\

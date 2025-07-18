@@ -2,38 +2,53 @@ import matplotlib.pyplot as plt
 import numpy as np
 import json
 
-# Pulls data from json file
-with open("scans-2025-07-11_19-12-38.json", "r") as f:
-    received_data = json.load(f)
+def RTI(json_path):
+    # Pulls data from json file
+    with open(json_path, "r") as f:
+        received_data = json.load(f)
 
-# Gets the scan start and end times
-scan_start = received_data["scan_start"]
-scan_end = received_data["scan_end"]
+    # Gets the scan start and end times
+    scan_start = received_data["scan_start"]
+    scan_end = received_data["scan_end"]
 
-scans = []
-slow_time = []
+    scans = []
+    slow_time = []
 
-# loops through all the scans 
-for i, scan in enumerate(received_data["scans"]):
-    amplitudes = []
-    for j, amplitude in enumerate(scan[1]):
-        range = (j*61 + scan_start) * 299792458 * (10e-13) / 2  # Convert time (ps) to range (m)
-        amplitudes.append(amplitude)
-    scans.append(amplitudes)
-    slow_time.append(scan[0])
+    # loops through all the scans 
+    for i, scan in enumerate(received_data["scans"]):
+        amplitudes = []
+        for j, amplitude in enumerate(scan[1]):
+            amplitudes.append(amplitude)
+        scans.append(amplitudes)
+        slow_time.append(scan[0])
 
-range_start = scan_start * 299792458 * (10e-13) / 2
-range_end = scan_end * 299792458 * (10e-13) / 2
+    range_start = scan_start * 299792458 * (10e-13) / 2
+    range_end = scan_end * 299792458 * (10e-13) / 2
 
-# Converts the amplitude array into decibels
-db = 20 * np.log10(np.abs(scans))
+    # Converts the amplitude array into decibels
+    db = 20 * np.log10(np.abs(scans))
+
+    fig, ax = plt.subplots()
+
+    img = ax.imshow(
+        db, aspect="auto", extent=(0, range_end-range_start, slow_time[-1], slow_time[0]), cmap="viridis"
+    )
+
+    ax.set_title("RTI")
+    ax.set_xlabel("Range (m)")
+    ax.set_ylabel("Slow Time (s)")
+
+    # Add colorbar and label
+    cbar = fig.colorbar(img, ax=ax)
+    cbar.set_label("Intensity (dB)")
+
+    return img
 
 # Plots the data
-plt.imshow(
-    db, aspect="auto", extent=(0, range_end-range_start, slow_time[-1], slow_time[0]), cmap="viridis"
-)
-plt.title("RTI")
-plt.xlabel("Range (m)")
-plt.ylabel("Slow Time (s)")
-plt.colorbar().set_label("Intensity dB")
-plt.show()
+if __name__ == "__main__":
+    img = RTI("scans-2025-07-11_19-35-20.json")
+    plt.imshow(img.get_array(), cmap=img.get_cmap(), aspect="auto", extent=img.get_extent())
+    plt.title("RTI")
+    plt.xlabel("Range (m)")
+    plt.ylabel("Slow Time (s)")
+    plt.show()

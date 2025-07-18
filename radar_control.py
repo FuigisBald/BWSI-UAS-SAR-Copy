@@ -1,11 +1,25 @@
 import P452_udp
 import time
 import json
-
+import argparse
 
 mrm_ip_addr = "192.168.1.100"
 port = 21210
 message_id = 2 # Message ID is originally 2 to account for the 2 setup messages.
+
+# Setup command-line arguments
+parser = argparse.ArgumentParser(description="Control the P452 Radar.")
+parser.add_argument('--node_id', type=int, required=True, help="Node ID of the radar device")
+parser.add_argument('--scan_end', type=int, required=True, help="Ending time of the scan")
+parser.add_argument('--scan_resolution', type=int, required=True, help="Resolution of the scan")
+parser.add_argument('--BII', type=int, required=True, help="BII parameter")
+parser.add_argument('--antenna_mode', type=int, required=True, help="Antenna mode setting")
+parser.add_argument('--transmit_gain', type=int, required=True, help="Transmit gain level")
+parser.add_argument('--code_channel', type=int, required=True, help="Code channel used")
+parser.add_argument('--persist_flag', type=int, required=True, help="Persistence flag (0 or 1)")
+parser.add_argument('--scan_count', type=int, required=True, help="Amount of scans")
+parser.add_argument('--scan_interval', type=int, required=True, help="Time between each scan in us.")
+args = parser.parse_args()
 
 def setup(
     node_id,
@@ -67,8 +81,6 @@ def setup(
     if set_config_confirm[-1] != 0:
         print(f"Error status recieved when setting configuration, see response: {set_config_confirm}")
         return
-    else:
-        print(set_config_confirm)
 
     P452_udp.udp_request(
         mrm_ip_addr=mrm_ip_addr,
@@ -82,7 +94,6 @@ def setup(
         print(f"Error status recieved when getting configuration, see response: {get_config_confirm}")
         return
     else:
-        print(get_config_confirm)
         return get_config_confirm[3], get_config_confirm[4] # Scan start and end times in ps
 
 def radar_control(
@@ -116,8 +127,6 @@ def radar_control(
     if control_confirm[-1] != 0:
         print(f"Error status recieved when requesting control, see response: {control_confirm}")
         return
-    else:
-        print("Requested radar control successfully.")
 
     scans = []
     scans_start_time = time.time()
@@ -149,19 +158,20 @@ def radar_control(
     }
 
     #creates json file of data
-    with open(f"scans-{datetime}.json", "w") as f:
+    with open(f"Desktop/UASSAR-1/scans-{datetime}.json", "w") as f:
         json.dump(json_data, f, indent=4)
 
+    print(f"scans-{datetime}.json")    
 
 if __name__ == "__main__":
     scan_start, scan_end = setup(
-        node_id=2,
-        scan_end=15, # Max range in m
-        scan_resolution=32,
-        BII=9,
-        antenna_mode=3,
-        transmit_gain=63,
-        code_channel=1,
-        persist_flag=0,
+        node_id=args.node_id,
+        scan_end=args.scan_end, # Max range in m
+        scan_resolution=args.scan_resolution,
+        BII=args.BII,
+        antenna_mode=args.antenna_mode,
+        transmit_gain=args.transmit_gain,
+        code_channel=args.code_channel,
+        persist_flag=args.persist_flag,
     )
-    radar_control(scan_start=scan_start, scan_end=scan_end, message_id=message_id, scan_count=1000, scan_interval=4000)
+    radar_control(scan_start=scan_start, scan_end=scan_end, message_id=message_id, scan_count=args.scan_count, scan_interval=args.scan_interval)
