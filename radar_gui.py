@@ -81,17 +81,11 @@ entry_persist_flag = tk.Entry(config_frame, font=main_font, relief="raised")
 entry_persist_flag.grid(row=8, column=1, padx=10, pady=5)
 entry_persist_flag.insert(0, "0")
 
-label_scan_count = tk.Label(config_frame, text="Scan Count:")
-label_scan_count.grid(row=9, column=0, padx=5, pady=5)
-entry_scan_count = tk.Entry(config_frame, font=main_font, relief="raised")
-entry_scan_count.grid(row=9, column=1, padx=10, pady=5)
-entry_scan_count.insert(0, "1000")
-
-label_scan_interval = tk.Label(config_frame, text="Scan Interval:")
-label_scan_interval.grid(row=10, column=0, padx=5, pady=5)
-entry_scan_interval = tk.Entry(config_frame, font=main_font, relief="raised")
-entry_scan_interval.grid(row=10, column=1, padx=10, pady=5)
-entry_scan_interval.insert(0, "1000")
+label_slow_time_end = tk.Label(config_frame, text="Slow Time End:")
+label_slow_time_end.grid(row=9, column=0, padx=5, pady=5)
+entry_slow_time_end = tk.Entry(config_frame, font=main_font, relief="raised")
+entry_slow_time_end.grid(row=9, column=1, padx=10, pady=5)
+entry_slow_time_end.insert(0, "5")
 
 RTI_frame = tk.Frame(root, borderwidth=2, relief="groove")
 RTI_frame.pack(side='left', fill='both', expand=True, padx=5, pady=5)
@@ -108,14 +102,13 @@ def radar_control(
     transmit_gain,
     code_channel,
     persist_flag,
-    scan_count,
-    scan_interval
+    slow_time_end
 ):
     global local_json_path
     print("Requesting radar control")
     stdin, stdout, stderr = client.exec_command(f"python Desktop/UASSAR-1/radar_control.py --node_id {node_id} --scan_end {scan_end}" \
     f" --scan_resolution {scan_resolution} --BII {BII} --antenna_mode {antenna_mode} --transmit_gain {transmit_gain}" \
-    f" --code_channel {code_channel} --persist_flag {persist_flag} --scan_count {scan_count} --scan_interval {scan_interval}")
+    f" --code_channel {code_channel} --persist_flag {persist_flag} --slow_time_end {slow_time_end}")
 
     errors = stderr.read().decode()
     if errors:
@@ -139,6 +132,9 @@ def draw_RTI(json_path):
     ax.set_ylabel("Slow Time (s)")
     cbar = fig.colorbar(img, ax=ax)
     cbar.set_label("Intensity (dB)")
+
+    # ax.plot([1,4], [0.06,5], color="red", linestyle="--")
+
     canvas = FigureCanvasTkAgg(fig, master=RTI_frame)
     canvas.draw()
     canvas.get_tk_widget().grid(row=1, column=0, sticky='nsew', padx=5)
@@ -159,8 +155,7 @@ fire_radar_btn = tk.Button(btn_frame, text="Fire Radar", font=main_font, command
     transmit_gain=int(entry_transmit_gain.get()),
     code_channel=int(entry_code_channel.get()),
     persist_flag=int(entry_persist_flag.get()),
-    scan_count=int(entry_scan_count.get()),
-    scan_interval=int(entry_scan_interval.get())
+    slow_time_end=int(entry_slow_time_end.get())
     )
 )
 fire_radar_btn.grid(row=11, column=0, padx=10)
