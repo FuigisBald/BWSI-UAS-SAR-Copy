@@ -5,7 +5,7 @@ import time
 from concurrent.futures import ProcessPoolExecutor
 
 # Pulls data from file
-with open("C:/Users/thema/Downloads/marathon_21.pkl", "rb") as f:
+with open("path", "rb") as f:
     receivedData = pickle.load(f)
 
 data_set = (receivedData.get("scan_data"))
@@ -28,6 +28,14 @@ window = np.hanning(len(positions)) # Define Hanning window to correct haloing
 added_amplitudes = np.zeros(shape=(grid_resolution[0], grid_resolution[1]), dtype=complex)  # Base array for adding up intensities
 
 def process_frames_chunk(start, end):
+    """
+    Process a chunk of frames in parallel, and add up amplitudes of each frame in chunk.
+
+    :param start: Index of the first frame in the chunk.
+    :param end: Index of the last frame in the chunk.
+    :return: Summed up amplitudes of the frames in the chunk.
+    :rtype: numpy.ndarray
+    """
     partial_frames = np.zeros(shape=(grid_resolution[0], grid_resolution[1]), dtype=complex)
 
     for i in range(start, end):
@@ -36,7 +44,12 @@ def process_frames_chunk(start, end):
     return partial_frames
 
 def process_frame(frame_index):
-    """Compute amplitude image for one frame index z."""
+    """Generate a single backprojection frame for a given frame index
+    
+    :param frame_index: Index of the frame to process.
+    :return: Amplitudes of the frame.
+    :rtype: numpy.ndarray
+    """
     distances = np.sqrt(
         (positions[frame_index][0] - x_grid) ** 2 + # X Axis
         (positions[frame_index][1] - y_grid) ** 2 + # Y Axis
@@ -56,7 +69,7 @@ if __name__ == "__main__":
     chunk_size = len(positions) // num_processes
     tasks = []
 
-    print("Starting backprocessing.")
+    print("Starting backprojection.")
     with ProcessPoolExecutor(max_workers=num_processes) as executor:
         for p in range(num_processes):
            print(f"Spawned process {p+1}/{num_processes}")
@@ -67,7 +80,7 @@ if __name__ == "__main__":
         partial_frames = [t.result() for t in tasks] # Get back summed frames from each subprocess
 
     final_frames = np.sum(partial_frames, axis=0)
-    avg_final_frames = final_frames/len(positions)
+    avg_final_frames = final_frames/len(positions) # Average out amplitudes based on number of frames
     
     back_projection_intensities = 20 * np.log10(np.abs(avg_final_frames))  # Convert to dB scale
     print(f"Finished processing in {time.time() - start_time:.2f}s.")

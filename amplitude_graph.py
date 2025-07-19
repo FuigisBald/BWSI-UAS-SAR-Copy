@@ -2,7 +2,7 @@ import json
 import matplotlib.pyplot as plt
 
 #Pulls data from json file
-with open('scans-2025-07-11_17-11-48.json', 'r') as f:
+with open('path', 'r') as f:
     receivedData = json.load(f)
 
 receivedAmplitude = []
@@ -10,7 +10,7 @@ ranges = []
 
 scan_start = receivedData["scan_start"]
 
-# Reads amplitude and range data
+# Reads amplitude and range data from 1st scan
 for i, amplitude in enumerate(receivedData["scans"][0][1]):
     time = i*61 + scan_start
     range = time * 299792458 * (10e-13) / 2  # Convert time to range in meters

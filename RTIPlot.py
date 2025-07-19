@@ -3,6 +3,10 @@ import numpy as np
 import json
 
 def RTI(json_path):
+    """
+    Draws an RTI using radar data from json file.
+    :param json_path: local path to json file
+    """
     # Pulls data from json file
     with open(json_path, "r") as f:
         received_data = json.load(f)
@@ -15,14 +19,11 @@ def RTI(json_path):
     slow_time = []
 
     # loops through all the scans 
-    for i, scan in enumerate(received_data["scans"]):
-        amplitudes = []
-        for j, amplitude in enumerate(scan[1]):
-            amplitudes.append(amplitude)
-        scans.append(amplitudes)
+    for scan in received_data["scans"]:
         slow_time.append(scan[0])
-    range_start = scan_start * 299792458 * (10e-13) / 2
-    range_end = scan_end * 299792458 * (10e-13) / 2
+        scans.append(scan[1])
+    range_start = scan_start * 299792458 * (10e-13) / 2 # Converts to meters
+    range_end = scan_end * 299792458 * (10e-13) / 2 # Converts to meters
 
     # Converts the amplitude array into decibels
     db = 20 * np.log10(np.abs(scans))
@@ -45,7 +46,7 @@ def RTI(json_path):
 
 # Plots the data
 if __name__ == "__main__":
-    img = RTI("C:/Users/thema/Downloads/scans-2025-07-12_04-44-43.json")
+    img = RTI("path")
     plt.imshow(img.get_array(), cmap=img.get_cmap(), aspect="auto", extent=img.get_extent())
     plt.title("RTI")
     plt.xlabel("Range (m)")

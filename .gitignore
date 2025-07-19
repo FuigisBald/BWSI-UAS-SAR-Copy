@@ -1,3 +1,4 @@
 *.json
 *.csv
-__pycache__\
+/__pycache__/*
+rpi_information.txt

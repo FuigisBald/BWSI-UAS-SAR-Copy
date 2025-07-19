@@ -47,6 +47,8 @@ def setup(
     :param transmit_gain: Transmit gain 0-63, 63 being max FCC power.
     :param code_channel: Coded UWB channel (0-10).
     :param persist_flag: Write config to FLASH memory? (0: no, 1: yes).
+    :return: Start and end times of the scan
+    :rtype: tuple
     """
 
     # Convert scan_end from m to ps
@@ -106,11 +108,10 @@ def radar_control(
     """
     Requests control of the radar to start scanning.
 
+    :param scan_start: Start time for the scan (ps) relative to pulse transimition time.
+    :param scan_end: End time for the scan (ps) relative to pulse transimition time.
     :param message_id: Unique tracking identifier for the message.
-    :param scan_count: Number of scans to perform.
-    :param scan_interval: Time between scans in microseconds.
-    :return: List of scan data amplitudes.
-    :rtype: list[int]
+    :param slow_time_end: End slow time of RTI (s)
     """
 
     P452_udp.udp_request(
@@ -153,9 +154,9 @@ def radar_control(
         total_messages = 2 # Placeholder to enter while loop
         amplitudes = []
 
-        while message_index + 1 < total_messages:
+        while message_index + 1 < total_messages: # Loop through all messages
             scan_info = P452_udp.udp_receive()
-            message_index = scan_info[17]
+            message_index = scan_info[17] 
             total_messages = scan_info[18]
             scan_data = scan_info[19:19+scan_info[15]]
             amplitudes.extend(scan_data)
@@ -186,7 +187,7 @@ def radar_control(
         "scans": scans
     }
 
-    #creates json file of data
+    # Creates json file of data
     with open(f"Desktop/UASSAR-1/scans-{datetime}.json", "w") as f:
         json.dump(json_data, f, indent=4)
 

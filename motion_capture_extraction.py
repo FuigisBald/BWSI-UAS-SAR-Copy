@@ -33,6 +33,13 @@ z += zOffset
 
 #Function that creates a spline or LOBF for data.
 def spline_regression(x, y, smoothing_factor=None):
+    """
+    Creates a spline or LOBF for data.
+    :param x: x values
+    :param y: y values
+    :param smoothing_factor: smoothing factor
+    :return: spline or LOBF
+    """
 
     x = np.array(x)
     y = np.array(y)
