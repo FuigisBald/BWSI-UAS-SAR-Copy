@@ -21,7 +21,6 @@ def RTI(json_path):
             amplitudes.append(amplitude)
         scans.append(amplitudes)
         slow_time.append(scan[0])
-
     range_start = scan_start * 299792458 * (10e-13) / 2
     range_end = scan_end * 299792458 * (10e-13) / 2
 
@@ -46,7 +45,7 @@ def RTI(json_path):
 
 # Plots the data
 if __name__ == "__main__":
-    img = RTI("scans-2025-07-11_19-35-20.json")
+    img = RTI("C:/Users/thema/Downloads/scans-2025-07-12_04-44-43.json")
     plt.imshow(img.get_array(), cmap=img.get_cmap(), aspect="auto", extent=img.get_extent())
     plt.title("RTI")
     plt.xlabel("Range (m)")

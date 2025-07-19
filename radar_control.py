@@ -17,8 +17,7 @@ parser.add_argument('--antenna_mode', type=int, required=True, help="Antenna mod
 parser.add_argument('--transmit_gain', type=int, required=True, help="Transmit gain level")
 parser.add_argument('--code_channel', type=int, required=True, help="Code channel used")
 parser.add_argument('--persist_flag', type=int, required=True, help="Persistence flag (0 or 1)")
-parser.add_argument('--scan_count', type=int, required=True, help="Amount of scans")
-parser.add_argument('--scan_interval', type=int, required=True, help="Time between each scan in us.")
+parser.add_argument('--slow_time_end', type=int, required=True, help="End slow time of RTI (s)")
 args = parser.parse_args()
 
 def setup(
@@ -99,9 +98,10 @@ def setup(
 def radar_control(
         scan_start,
         scan_end,
-        message_id, 
-        scan_count,
-        scan_interval
+        message_id,
+        slow_time_end,
+        scan_count = 65535,
+        scan_interval= 0,
 ):
     """
     Requests control of the radar to start scanning.
@@ -116,12 +116,27 @@ def radar_control(
     P452_udp.udp_request(
         mrm_ip_addr=mrm_ip_addr,
         mrm_ip_port=port,
+        message_type=0xF005, # Set sleepmode request message
+        message_id=message_id,
+        sleep_mode=0 # Set P452 to Active
+    )
+    message_id += 1
+
+    sleepmode_confirm = P452_udp.udp_receive()
+    if sleepmode_confirm[-1] != 0:
+        print(f"Error status recieved when setting sleepmode, see response: {sleepmode_confirm}")
+        return
+
+    P452_udp.udp_request(
+        mrm_ip_addr=mrm_ip_addr,
+        mrm_ip_port=port,
         message_type=0x1003, # Control request message
         message_id=message_id,
         scan_count=scan_count,
         reserved=0,
         scan_interval_time=scan_interval
     )
+    message_id += 1
 
     control_confirm = P452_udp.udp_receive()
     if control_confirm[-1] != 0:
@@ -130,10 +145,10 @@ def radar_control(
 
     scans = []
     scans_start_time = time.time()
+    scan_time = 0
 
     #reads scan data
-    for scan_n in range(scan_count):
-        scan_end_time = time.time()
+    while scan_time < slow_time_end:
         message_index = 0
         total_messages = 2 # Placeholder to enter while loop
         amplitudes = []
@@ -145,9 +160,23 @@ def radar_control(
             scan_data = scan_info[19:19+scan_info[15]]
             amplitudes.extend(scan_data)
 
-
+        scan_end_time = time.time()
         scan_time = round(scan_end_time - scans_start_time, 5)
         scans.append((scan_time, amplitudes))
+
+    P452_udp.udp_request(
+        mrm_ip_addr=mrm_ip_addr,
+        mrm_ip_port=port,
+        message_type=0xF005, # Set sleepmode request message
+        message_id=message_id,
+        sleep_mode=1 # Set P452 to Idle to end scan
+    )
+    message_id += 1
+
+    sleepmode_confirm = P452_udp.udp_receive()
+    if sleepmode_confirm[-1] != 0:
+        print(f"Error status recieved when setting sleepmode, see response: {sleepmode_confirm}")
+        return
 
     datetime = time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime())
 
@@ -174,4 +203,4 @@ if __name__ == "__main__":
         code_channel=args.code_channel,
         persist_flag=args.persist_flag,
     )
-    radar_control(scan_start=scan_start, scan_end=scan_end, message_id=message_id, scan_count=args.scan_count, scan_interval=args.scan_interval)
+    radar_control(scan_start=scan_start, scan_end=scan_end, message_id=message_id, slow_time_end=args.slow_time_end)
