@@ -1,3 +1,6 @@
 *.json
 *.csv
-__pycache__\
+*.txt
+*.cphd
+scans/
+__pycache__/
