@@ -95,7 +95,6 @@ entry_slow_time_end = tk.Entry(config_frame, font=main_font, relief="raised")
 entry_slow_time_end.grid(row=9, column=1, padx=10, pady=5)
 entry_slow_time_end.insert(0, "5")
 
-# Create frame to display RTI
 RTI_frame = tk.Frame(root, borderwidth=2, relief="groove")
 RTI_frame.pack(side='left', fill='both', expand=True, padx=5, pady=5)
 RTI_title = tk.Label(RTI_frame, text="RTI", font=("Arial", 16))
@@ -113,24 +112,11 @@ def radar_control(
     persist_flag,
     slow_time_end
 ):
-    """
-    Requests radar control from the Raspberry Pi through SSH.
-    :param node_id: Node ID of the radar
-    :param scan_end: Scan end distance in meters
-    :param scan_resolution: Scan resolution in bins
-    :param BII: Log2 of the number of integrated samples
-    :param antenna_mode: Antenna mode (1: unknown, 2: unknown, 3: Transmit on A, Receive on B)
-    :param transmit_gain: Transmit gain 0-63, 63 being max FCC power
-    :param code_channel: Coded UWB channel (0-10)
-    :param persist_flag: Write config to FLASH memory? (0: no, 1: yes)
-    :param slow_time_end: End slow time of RTI (s)
-    """
-
     global local_json_path
     print("Requesting radar control")
     stdin, stdout, stderr = client.exec_command(f"python Desktop/UASSAR-1/radar_control.py --node_id {node_id} --scan_end {scan_end}" \
     f" --scan_resolution {scan_resolution} --BII {BII} --antenna_mode {antenna_mode} --transmit_gain {transmit_gain}" \
-    f" --code_channel {code_channel} --persist_flag {persist_flag} --slow_time_end {slow_time_end}") # Run command through SSH
+    f" --code_channel {code_channel} --persist_flag {persist_flag} --slow_time_end {slow_time_end}")
 
     errors = stderr.read().decode()
     if errors:

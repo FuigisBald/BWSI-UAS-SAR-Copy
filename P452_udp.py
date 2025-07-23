@@ -169,7 +169,9 @@ def udp_receive(buffer_size=16384):
     if message_type == "0xF10c": # Managing error message type 
         print(f"Error message received: {data}: check documentation for correct message order.")
         return None
-
+    
+def close_socket():
+    sock.close()
 
 if __name__ == "__main__":
     udp_request(

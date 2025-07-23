@@ -111,21 +111,27 @@ def radar_control(
     :param scan_start: Start time for the scan (ps) relative to pulse transimition time.
     :param scan_end: End time for the scan (ps) relative to pulse transimition time.
     :param message_id: Unique tracking identifier for the message.
-    :param slow_time_end: End slow time of RTI (s)
+    :param scan_count: Number of scans to perform.
+    :param scan_interval: Time between scans in microseconds.
+    :return: List of scan data amplitudes.
+    :rtype: list[int]
     """
 
+    # Stop scan in case it hadn't been stopped previously
     P452_udp.udp_request(
         mrm_ip_addr=mrm_ip_addr,
         mrm_ip_port=port,
-        message_type=0xF005, # Set sleepmode request message
+        message_type=0x1003, # Control request message
         message_id=message_id,
-        sleep_mode=0 # Set P452 to Active
+        scan_count=0, # Set scan count to 0 to stop scan
+        reserved=0,
+        scan_interval_time=scan_interval
     )
     message_id += 1
 
-    sleepmode_confirm = P452_udp.udp_receive()
-    if sleepmode_confirm[-1] != 0:
-        print(f"Error status recieved when setting sleepmode, see response: {sleepmode_confirm}")
+    control_stop_confirm = P452_udp.udp_receive()
+    if control_stop_confirm[-1] != 0:
+        print(f"Error status recieved when stopping scans before control request, see response: {control_stop_confirm}")
         return
 
     P452_udp.udp_request(
@@ -168,15 +174,17 @@ def radar_control(
     P452_udp.udp_request(
         mrm_ip_addr=mrm_ip_addr,
         mrm_ip_port=port,
-        message_type=0xF005, # Set sleepmode request message
+        message_type=0x1003, # Control request message
         message_id=message_id,
-        sleep_mode=1 # Set P452 to Idle to end scan
+        scan_count=0, # Set scan count to 0 to stop scan
+        reserved=0,
+        scan_interval_time=scan_interval
     )
     message_id += 1
 
-    sleepmode_confirm = P452_udp.udp_receive()
-    if sleepmode_confirm[-1] != 0:
-        print(f"Error status recieved when setting sleepmode, see response: {sleepmode_confirm}")
+    control_stop_confirm = P452_udp.udp_receive()
+    if control_stop_confirm[-1] != 0:
+        print(f"Error status recieved when stopping scans after recieveing data, see response: {control_stop_confirm}")
         return
 
     datetime = time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime())
@@ -205,3 +213,4 @@ if __name__ == "__main__":
         persist_flag=args.persist_flag,
     )
     radar_control(scan_start=scan_start, scan_end=scan_end, message_id=message_id, slow_time_end=args.slow_time_end)
+    P452_udp.close_socket()

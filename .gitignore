@@ -1,5 +1,6 @@
 *.json
 *.csv
-__pycache__
-rpi_information.txt
-2023-11-09-12-38-46_UMBRA-04_CPHD.cphd
+*.txt
+*.cphd
+scans/
+__pycache__/

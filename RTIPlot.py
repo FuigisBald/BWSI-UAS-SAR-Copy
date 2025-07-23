@@ -21,9 +21,8 @@ def RTI(json_path):
     # loops through all the scans 
     for scan in received_data["scans"]:
         slow_time.append(scan[0])
-        scans.append(scan[1])
-    range_start = scan_start * 299792458 * (10e-13) / 2 # Converts to meters
-    range_end = scan_end * 299792458 * (10e-13) / 2 # Converts to meters
+    range_start = scan_start * 299792458 * (10e-13) / 2
+    range_end = scan_end * 299792458 * (10e-13) / 2
 
     # Converts the amplitude array into decibels
     db = 20 * np.log10(np.abs(scans))
@@ -46,7 +45,7 @@ def RTI(json_path):
 
 # Plots the data
 if __name__ == "__main__":
-    img = RTI("path")
+    img = RTI("C:/Users/thema/Downloads/scans-2025-07-12_04-44-43.json")
     plt.imshow(img.get_array(), cmap=img.get_cmap(), aspect="auto", extent=img.get_extent())
     plt.title("RTI")
     plt.xlabel("Range (m)")
