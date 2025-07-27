@@ -35,7 +35,6 @@ def radar_control_subprocess(
 
     import paramiko
 
-
     # Connect to Raspberry Pi with SSH
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -60,12 +59,13 @@ def radar_control_subprocess(
     f" --scan_resolution {scan_resolution} --BII {BII} --antenna_mode {antenna_mode} --transmit_gain {transmit_gain}" \
     f" --code_channel {code_channel} --persist_flag {persist_flag} --slow_time_end {slow_time_end}") # Run command through SSH
 
+    # Check SSH output for errors
     errors = stderr.read().decode()
     if errors:
         print(f"Error: {errors}")
 
     print("Getting json file from Raspberry Pi")
-    json_filename = stdout.read().decode()[:-1]
+    json_filename = stdout.read().decode()[:-1] # Get json file name from SSH output
     rpi_json_path = f"/home/sardemo/Desktop/UASSAR-1/{json_filename}"
     local_json_path = os.path.abspath(f'./scans/{json_filename}')
 
@@ -91,6 +91,21 @@ def radar_control_starter(
     persist_flag,
     slow_time_end
 ):
+    """
+    Starts a new process to request radar control from the Raspberry Pi. The new process
+    runs the radar_control_subprocess function with the given parameters and communicates
+    with the parent process through a Queue.
+
+    :param node_id: Node ID of the radar
+    :param scan_end: Scan end distance in meters
+    :param scan_resolution: Scan resolution in bins
+    :param BII: Log2 of the number of integrated samples
+    :param antenna_mode: Antenna mode (1: unknown, 2: unknown, 3: Transmit on A, Receive on B)
+    :param transmit_gain: Transmit gain 0-63, 63 being max FCC power
+    :param code_channel: Coded UWB channel (0-10)
+    :param persist_flag: Write config to FLASH memory? (0: no, 1: yes)
+    :param slow_time_end: End slow time of RTI (s)
+    """
     result_queue = multiprocessing.Queue()
     process = multiprocessing.Process(target=radar_control_subprocess, args=(node_id, scan_end, scan_resolution, BII, antenna_mode, 
                                                                           transmit_gain, code_channel, persist_flag, slow_time_end, 
@@ -99,9 +114,15 @@ def radar_control_starter(
     check_process_result(result_queue)
 
 def check_process_result(result_queue):
+    """
+    Checks the result queue from the radar_control_subprocess function and updates the json path if recieved
+    .
+    :param result_queue: A multiprocessing.Queue used for inter-process communication.
+    """
+
     if result_queue.qsize() > 0:
         result = result_queue.get_nowait()  # Try getting result (non-blocking)
-        if "json_path" in result:
+        if "json_path" in result: # If json path is in result, then the radar has finished firing
             global local_json_path
             local_json_path = result["json_path"]
         else:
@@ -111,24 +132,24 @@ def check_process_result(result_queue):
 
 def draw_RTI():
     """
-    Draws RTI based on json file and adds to GUI
-    :param json_path: local path to json file
+    Draws RTI based on local json file and adds to GUI
     """
-    plt.close("all")
+    plt.close("all") # Clear previous RTI to avoid drawing over it
     global local_json_path
-    if entry_json_path.get() != "":
-        local_json_path = entry_json_path.get()
-    pixel_polish_value = pixel_polish_bool.get()
-    complex_value = complex_bool.get()
+    if entry_json_path.get() != "": # Checks if json path entry field isn't empty
+        local_json_path = entry_json_path.get() # If entry field isn't empty, set local json path to entry field, 
+        #otherwise it will use the last recieved value
+    pixel_polish_value = pixel_polish_bool.get() # Checks if pixel polish checkbox is checked
+    complex_value = complex_bool.get() # Checks if complex checkbox is checked
 
     fig, ax = plt.subplots()
     global scans, range_start, range_end, slow_times, db, extent
-    scans, range_start, range_end, slow_times = RTIPlot.RTI(local_json_path, complex_value)
+    scans, range_start, range_end, slow_times = RTIPlot.RTI(local_json_path, complex_value) # Draw RTI and get its values
     extent = (0, range_end-range_start, slow_times[-1], slow_times[0])
     
     db = 20 * np.log10(np.abs(scans))
 
-    if pixel_polish_value == 1:
+    if pixel_polish_value == 1: # If pixel polish checkbox is checked, sets minimum and maximum thresholds to clean up RTI
         replicated_db = db
         min_threshold = 55
         max_threshold = 90
@@ -144,29 +165,33 @@ def draw_RTI():
     cbar = fig.colorbar(ax.get_images()[0], ax=ax)
     cbar.set_label("Intensity (dB)")
 
-    if entry_mocap_path.get() != "":
-        mocap_path = entry_mocap_path.get()
-        scatter_1_pos = list(map(float, entry_scatter_1.get().split(",")))
+    mocap_path = entry_mocap_path.get()
+    if mocap_path != "": # If a path is given to mocap csv
+        scatter_1_pos = list(map(float, entry_scatter_1.get().split(","))) # Get scatterer positions from entry field
         scatter_2_pos = list(map(float, entry_scatter_2.get().split(",")))
         global t, mocap_plot_1, mocap_plot_2
+        # Get distances between platform and scatterers and plots ontop of RTI
         mocap_data, t = motion_capture_extraction.distancesFromScatters(mocap_path, [scatter_1_pos, scatter_2_pos])
         mocap_data = np.array(mocap_data)
-        mocap_plot_1 = ax.plot(mocap_data[0] - 0.25, t, label = "Distance From Scatterer", color = 'red')[0]
+        mocap_plot_1 = ax.plot(mocap_data[0] - 0.25, t, label = "Distance From Scatterer", color = 'red')[0] # 0.25m offset, now included in control code
         mocap_plot_2 = ax.plot(mocap_data[1] - 0.25, t, label = "Distance From Scatterer", color = 'red')[0]
         ax.set_xlim(extent[0], extent[1])
         ax.set_ylim(extent[2], extent[3])
         global slow_time_slider
+        # Slider to offset time axis of mocap data for manual alignement
+        # From 0 to the length of the mocap time array, so that the mocap is always fully in frame
         slow_time_slider = tk.Scale(RTI_frame, from_=-t[-1]+extent[2], to=0, orient="vertical", resolution=0.1, command=update_RTI)
         slow_time_slider.grid(row=1, column=1, sticky='ns', pady=5)
-        auto_time_align_btn = tk.Button(RTI_frame, text="Auto Align Slow Time", command=auto_time_align)
+        auto_time_align_btn = tk.Button(RTI_frame, text="Auto Align Slow Time", command=auto_time_align) # Button to auto time align
         auto_time_align_btn.grid(row=2, column=1, sticky='nsew', padx=5, pady=5)
     
     global canvas
+    # Displays RTI to GUI
     canvas = FigureCanvasTkAgg(fig, master=RTI_frame)
     canvas.draw()
     canvas.get_tk_widget().grid(row=1, column=0, sticky='nsew', padx=5)
 
-    pickle_output_btn = tk.Button(RTI_frame, text="Output to PKL", command=pickle_output)
+    pickle_output_btn = tk.Button(RTI_frame, text="Output to PKL", command=pickle_output) # Button to output data to .pkl for backprojection
     pickle_output_btn.grid(row=2, column=0, sticky='nsew', padx=5, pady=5)
 
 def update_RTI(slow_time_offset):
@@ -175,8 +200,9 @@ def update_RTI(slow_time_offset):
     :param slow_time_offset: Slow time offset in seconds
     """ 
     plt.close("all")
-    mocap_plot_1.set_ydata(t + float(slow_time_offset))
+    mocap_plot_1.set_ydata(t + float(slow_time_offset)) # Offset time axis
     mocap_plot_2.set_ydata(t + float(slow_time_offset))
+    # Draw RTI again
     canvas.draw_idle()
     canvas.get_tk_widget().grid(row=1, column=0, sticky='nsew', padx=5)
 
@@ -186,9 +212,10 @@ def auto_time_align():
     """
     averages = []
     offsets = []
-    mocap_plot_1.set_ydata(t)
-    mocap_plot_2.set_ydata(t)
-    for offset in range(0, ((-t[-1]+extent[2])*10).astype(int), -1):
+    mocap_plot_1.set_ydata(t) # Resets time axis with no offset
+    mocap_plot_2.set_ydata(t) 
+    for offset in range(0, ((-t[-1]+extent[2])*10).astype(int), -1): # Mulitpliy by 10 because range doesn't work with floats
+        # Convert mocap axes to pixel coordinates
         mocap_xy_1 = mocap_plot_1.get_xydata()
         mocap_xy_2 = mocap_plot_2.get_xydata()
         x_data_1, y_data_1 = mocap_xy_1[:, 0], mocap_xy_1[:, 1]
@@ -207,19 +234,21 @@ def auto_time_align():
         y_pix_2 = ((extent[3] - offset_y_data_2) / (extent[3] - extent[2]) * height).astype(int)
         valid_indices_2 = (x_pix_2 >= 0) & (x_pix_2 < width) & (y_pix_2 >= 0) & (y_pix_2 < height)
 
+        # Remove indices outside of range
         x_pix_1 = x_pix_1[valid_indices_1]
         y_pix_1 = y_pix_1[valid_indices_1]
 
         x_pix_2 = x_pix_2[valid_indices_2]
         y_pix_2 = y_pix_2[valid_indices_2]
 
+        # Get average of pixels covered by mocap plots
         avg_1 = np.mean(db[y_pix_1, x_pix_1])
         avg_2 = np.mean(db[y_pix_2, x_pix_2])
         averages.append((avg_1+avg_2)/2)
         offsets.append(offset/10)
+    # Get highest average index
     max_avg_index = np.argmax(averages)
     slow_time_slider.set(offsets[max_avg_index])
-    print(offsets[max_avg_index])
 
 def pickle_output():
     """
@@ -228,7 +257,8 @@ def pickle_output():
     :param positions: list of positions from mocap file
     """
 
-    range_bins = np.linspace(0, range_end-range_start, len(scans[0])) + 0.25
+    range_bins = np.linspace(0, range_end-range_start, len(scans[0])) + 0.25 # Temporary 0.25m offset
+    # Interpoalte scan times into mocap positions
     positions = motion_capture_extraction.intepolate_positions(slow_times, entry_mocap_path.get(), float(slow_time_slider.get()))
 
     output = {
@@ -237,13 +267,9 @@ def pickle_output():
         "range_bins": range_bins
     }
 
-    print(f"Outputed to pickleoutputs/{local_json_path[6:-5]}.pkl")
+    print(f"Outputed to pickleoutputs/{local_json_path[6:-5]}.pkl") # Get file name only from json path
     with open(f"pickleoutputs/{local_json_path[6:-5]}.pkl", "wb") as f:
         pickle.dump(output, f)
-
-    # Step 1: Get amplitude from json file
-    # Step 2: Create range bins, starting at start_time and incrementing by 61ps (convert to meters)
-    # Step 3: Interpolate slow time values for each scan 
 
 def _quit():
     """ 
@@ -348,10 +374,11 @@ if __name__ == "__main__":
     )
     fire_radar_btn.grid(row=11, column=0, padx=(50, 10), pady=10)
 
-    # Button to display RTIRTI
+    # Button to display RTI
     draw_rti_btn = tk.Button(btn_frame, text="Display RTI", font=main_font, command=draw_RTI)
     draw_rti_btn.grid(row=11, column=1, padx=(10, 50), pady=10)
 
+    # Entry fields for entering past RTIs and mocap data
     label_json_path = tk.Label(btn_frame, text="JSON Path:")
     label_json_path.grid(row=12, column=0, padx=5, pady=5)
     entry_json_path = tk.Entry(btn_frame, font=main_font, relief="raised")

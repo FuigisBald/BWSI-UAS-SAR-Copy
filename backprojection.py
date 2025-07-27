@@ -85,7 +85,7 @@ if __name__ == "__main__":
     back_projection_intensities = 20 * np.log10(np.abs(avg_final_frames))  # Convert to dB scale
     print(f"Finished processing in {time.time() - start_time:.2f}s.")
 
-    # generate backprojection
+    # Generate backprojection
     plt.imshow(
         back_projection_intensities,
         aspect = 'auto',
@@ -93,6 +93,7 @@ if __name__ == "__main__":
         origin="lower",
         vmin=np.percentile(back_projection_intensities, 40)
     )
+    # Plot reflector positions
     plt.plot(-0.864578, -1.701285, 'ro')
     plt.plot(2.082795, 1.340133, 'ro')
     #plt.plot(positions[:, 0], positions[:, 2], 'ro')
