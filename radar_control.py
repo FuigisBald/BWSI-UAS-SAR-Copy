@@ -29,7 +29,7 @@ def setup(
     transmit_gain,
     code_channel,
     persist_flag,
-    scan_start=20014, #3m offset,
+    scan_start=18346, #2.75m offset,
 
 ):
     """

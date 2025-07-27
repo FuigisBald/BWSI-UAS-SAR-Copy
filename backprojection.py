@@ -5,16 +5,16 @@ import time
 from concurrent.futures import ProcessPoolExecutor
 
 # Pulls data from file
-with open("path", "rb") as f:
+with open("pickleoutputs/walk4.pkl", "rb") as f:
     receivedData = pickle.load(f)
 
-data_set = (receivedData.get("scan_data"))
+data_set = receivedData.get("scan_data")
 positions = receivedData.get("platform_pos")
 range_bins = receivedData.get("range_bins")
 
 grid_resolution = (500, 500)  # In pixels, adjust as needed
-c_max_ranges = (15, 35)  # x in meters, adjust as needed
-r_max_ranges = (-106.7, -83.4)  # y in meters, adjust as needed
+c_max_ranges = (-1.45, 2.9)  # x in meters, adjust as needed
+r_max_ranges = (-2.26, 1.9)  # y in meters, adjust as needed
 # c_res = (c_max_range[1]-c_max_ranges[0]) / grid_resolution[1]  # Cross-range resolution
 # r_res = (r_max_ranges[1]-r_max_ranges[0]) / grid_resolution[0]  # Range resolution in meters
 
@@ -52,8 +52,8 @@ def process_frame(frame_index):
     """
     distances = np.sqrt(
         (positions[frame_index][0] - x_grid) ** 2 + # X Axis
-        (positions[frame_index][1] - y_grid) ** 2 + # Y Axis
-        positions[frame_index][2] ** 2 # Z Axis
+        (positions[frame_index][2] - y_grid) ** 2 + # Y Axis
+        positions[frame_index][1] ** 2 # Z Axis
     )
     local_amplitudes = np.interp(distances, range_bins, data_set[frame_index]) # Linear interpolation
 
@@ -91,8 +91,11 @@ if __name__ == "__main__":
         aspect = 'auto',
         extent=(c_max_ranges[0], c_max_ranges[1], r_max_ranges[0], r_max_ranges[1]),
         origin="lower",
-        #vmin=np.percentile(back_projection_intensities, 40)
+        vmin=np.percentile(back_projection_intensities, 40)
     )
+    plt.plot(-0.864578, -1.701285, 'ro')
+    plt.plot(2.082795, 1.340133, 'ro')
+    #plt.plot(positions[:, 0], positions[:, 2], 'ro')
     plt.colorbar(label="Intensity (dB)")
     plt.title("Backprojection of Radar Data")
     plt.xlabel("Cross-range (m)")

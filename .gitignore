@@ -2,5 +2,6 @@
 *.csv
 *.txt
 *.cphd
-scans/
 __pycache__/
+scans/
+pickleoutputs/
