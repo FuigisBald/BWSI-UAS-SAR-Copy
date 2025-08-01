@@ -6,7 +6,8 @@ from concurrent.futures import ProcessPoolExecutor
 from matplotlib.widgets import Slider
 
 # Pulls data from file
-with open("pickleoutputs/-3.52.pkl", "rb") as f:
+path = "thur afternoon 6/-3.462.pkl"
+with open(f"pickleoutputs/{path}", "rb") as f:
     receivedData = pickle.load(f)
 
 data_set = receivedData.get("scan_data")
@@ -95,6 +96,17 @@ if __name__ == "__main__":
     back_projection_intensities = 20 * np.log10(np.abs(avg_final_frames))  # Convert to dB scale
 
     print(f"Finished processing in {time.time() - start_time:.2f}s.")
+
+    x_axis = np.linspace(c_max_ranges[0], c_max_ranges[1], grid_resolution[0])
+    y_axis = np.linspace(r_max_ranges[0], r_max_ranges[1], grid_resolution[1])
+    pkl_backproj_output = {
+        "backprojected_img": back_projection_intensities,
+        "x_axis": x_axis,
+        "y_axis": y_axis
+    }
+
+    with open(f"pickleoutputs/{path[:-4]}_final.pkl", 'wb') as f:
+        pickle.dump(pkl_backproj_output, f)
 
     # generate backprojection
     figure, axis = plt.subplots()

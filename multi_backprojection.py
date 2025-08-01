@@ -113,7 +113,7 @@ if __name__ == "__main__":
     colorbars = []
 
 
-    dir_path = "pickleoutputs/6"
+    dir_path = "pickleoutputs/thur afternoon 6"
     pkl_paths = os.listdir(dir_path)
     for idx, path in enumerate(pkl_paths):
         y = idx // 4
