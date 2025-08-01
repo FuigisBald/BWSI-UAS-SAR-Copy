@@ -25,7 +25,7 @@ def distancesFromScatters(csv, scatterersPos):
     :param scatterersPos: 3D positions of each scatterer
     :return: 2D array of distances, and the time array
     """
-    df = pd.read_csv(csv, skiprows = 6, usecols=[1, 20, 21, 22])
+    df = pd.read_csv(csv, skiprows = 6, usecols=[1, 6, 7, 8])
 
     # Drop rows with any missing values
     df_clean = df.dropna()
@@ -69,7 +69,7 @@ def intepolate_positions(slow_times, mocap_path, offset):
     :param offset: time offset in seconds
     :return: 2D array of positions with each row being [x, y, z]
     """
-    df = pd.read_csv(mocap_path, skiprows = 6, usecols=[1, 20, 21, 22])
+    df = pd.read_csv(mocap_path, skiprows = 6, usecols=[1, 6, 7, 8])
 
     # Drop rows with any missing values
     df_clean = df.dropna()

@@ -116,7 +116,6 @@ def radar_control_starter(
 def check_process_result(result_queue):
     """
     Checks the result queue from the radar_control_subprocess function and updates the json path if recieved
-    .
     :param result_queue: A multiprocessing.Queue used for inter-process communication.
     """
 
@@ -143,16 +142,16 @@ def draw_RTI():
     complex_value = complex_bool.get() # Checks if complex checkbox is checked
 
     fig, ax = plt.subplots()
-    global scans, range_start, range_end, slow_times, db, extent
+    global scans, range_start, range_end, slow_times, db, extent, cutoff_line
     scans, range_start, range_end, slow_times = RTIPlot.RTI(local_json_path, complex_value) # Draw RTI and get its values
     extent = (0, range_end-range_start, slow_times[-1], slow_times[0])
-    
+
     db = 20 * np.log10(np.abs(scans))
 
     if pixel_polish_value == 1: # If pixel polish checkbox is checked, sets minimum and maximum thresholds to clean up RTI
         replicated_db = db
         min_threshold = 55
-        max_threshold = 90
+        max_threshold = 80
         replicated_db[replicated_db<min_threshold] = min_threshold
         replicated_db[replicated_db>max_threshold] = max_threshold
         db = replicated_db
@@ -165,36 +164,56 @@ def draw_RTI():
     cbar = fig.colorbar(ax.get_images()[0], ax=ax)
     cbar.set_label("Intensity (dB)")
 
+    # cutoff_line = ax.plot([extent[0],extent[1]], [0,0], color="black", linewidth=2)[0]
+
     mocap_path = entry_mocap_path.get()
     if mocap_path != "": # If a path is given to mocap csv
         scatter_1_pos = list(map(float, entry_scatter_1.get().split(","))) # Get scatterer positions from entry field
         scatter_2_pos = list(map(float, entry_scatter_2.get().split(",")))
-        global t, mocap_plot_1, mocap_plot_2
+        global t, mocap_plot_1, mocap_plot_2, mocap_data
         # Get distances between platform and scatterers and plots ontop of RTI
         mocap_data, t = motion_capture_extraction.distancesFromScatters(mocap_path, [scatter_1_pos, scatter_2_pos])
         mocap_data = np.array(mocap_data)
-        mocap_plot_1 = ax.plot(mocap_data[0] - 0.25, t, label = "Distance From Scatterer", color = 'red')[0] # 0.25m offset, now included in control code
-        mocap_plot_2 = ax.plot(mocap_data[1] - 0.25, t, label = "Distance From Scatterer", color = 'red')[0]
+        mocap_plot_1 = ax.plot(mocap_data[0], t, label = "Distance From Scatterer", color = 'red')[0]
+        mocap_plot_2 = ax.plot(mocap_data[1], t, label = "Distance From Scatterer", color = 'red')[0]
         ax.set_xlim(extent[0], extent[1])
         ax.set_ylim(extent[2], extent[3])
-        global slow_time_slider
+        global slow_time_slider, range_slider
         # Slider to offset time axis of mocap data for manual alignement
         # From 0 to the length of the mocap time array, so that the mocap is always fully in frame
-        slow_time_slider = tk.Scale(RTI_frame, from_=-t[-1]+extent[2], to=0, orient="vertical", resolution=0.1, command=update_RTI)
-        slow_time_slider.grid(row=1, column=1, sticky='ns', pady=5)
+        slow_time_slider = tk.Scale(RTI_frame, from_=-t[-1]+extent[2], to=0, orient="vertical", resolution=0.001, command=update_RTI_slow_time)
+        slow_time_slider.grid(row=1, column=2, sticky='ns', pady=5)
+        range_slider = tk.Scale(RTI_frame, from_=-4, to=4, orient="horizontal", resolution=0.01, command=update_RTI_range)
+        range_slider.grid(row=2, column=1, sticky='ew', pady=5)
+        range_slider.set(2.75)
         auto_time_align_btn = tk.Button(RTI_frame, text="Auto Align Slow Time", command=auto_time_align) # Button to auto time align
-        auto_time_align_btn.grid(row=2, column=1, sticky='nsew', padx=5, pady=5)
+        auto_time_align_btn.grid(row=2, column=2, sticky='nsew', padx=5, pady=5)
     
-    global canvas
+    global canvas, rti_cutoff_slider
     # Displays RTI to GUI
     canvas = FigureCanvasTkAgg(fig, master=RTI_frame)
     canvas.draw()
-    canvas.get_tk_widget().grid(row=1, column=0, sticky='nsew', padx=5)
+    canvas.get_tk_widget().grid(row=1, column=1, sticky='nsew', padx=5)
 
+    rti_cutoff_slider = tk.Scale(RTI_frame, from_=0, to=extent[2], orient="vertical", resolution=0.1, command=update_RTI_cutoff)
+    rti_cutoff_slider.grid(row=1, column=0, sticky='nsew', padx=5, pady=5)
+
+    # Button to output data to .pkl for backprojection
     pickle_output_btn = tk.Button(RTI_frame, text="Output to PKL", command=pickle_output) # Button to output data to .pkl for backprojection
-    pickle_output_btn.grid(row=2, column=0, sticky='nsew', padx=5, pady=5)
+    pickle_output_btn.grid(row=3, column=1, sticky='nsew', padx=5, pady=5)
 
-def update_RTI(slow_time_offset):
+def update_RTI_cutoff(cutoff):
+    plt.close("all")
+    cutoff_line.set_ydata([float(cutoff), float(cutoff)])
+    canvas.draw_idle()
+
+def update_RTI_range(range_offset):
+    plt.close("all")
+    mocap_plot_1.set_xdata(mocap_data[0]+float(range_offset))
+    mocap_plot_2.set_xdata(mocap_data[1]+float(range_offset))
+    canvas.draw_idle()
+    
+def update_RTI_slow_time(slow_time_offset):
     """
     Updates RTI extent based on slider value
     :param slow_time_offset: Slow time offset in seconds
@@ -204,7 +223,7 @@ def update_RTI(slow_time_offset):
     mocap_plot_2.set_ydata(t + float(slow_time_offset))
     # Draw RTI again
     canvas.draw_idle()
-    canvas.get_tk_widget().grid(row=1, column=0, sticky='nsew', padx=5)
+    canvas.get_tk_widget().grid(row=1, column=1, sticky='nsew', padx=5)
 
 def auto_time_align():
     """
@@ -214,7 +233,7 @@ def auto_time_align():
     offsets = []
     mocap_plot_1.set_ydata(t) # Resets time axis with no offset
     mocap_plot_2.set_ydata(t) 
-    for offset in range(0, ((-t[-1]+extent[2])*10).astype(int), -1): # Mulitpliy by 10 because range doesn't work with floats
+    for offset in range(0, ((-t[-1]+extent[2])*1000).astype(int), -1): # Mulitpliy by 10 because range doesn't work with floats
         # Convert mocap axes to pixel coordinates
         mocap_xy_1 = mocap_plot_1.get_xydata()
         mocap_xy_2 = mocap_plot_2.get_xydata()
@@ -256,20 +275,42 @@ def pickle_output():
     :param json_path: local path to json file
     :param positions: list of positions from mocap file
     """
+    cutoff = float(rti_cutoff_slider.get())
+    cutoff_slow_times = [time for time in slow_times if time >= cutoff]
+    cutoff_scans = scans[:len(cutoff_slow_times)]
 
-    range_bins = np.linspace(0, range_end-range_start, len(scans[0])) + 0.25 # Temporary 0.25m offset
+    range_bins = np.linspace(0, range_end-range_start, len(scans[0])) - float(range_slider.get())
+
+    # Shift hilbert data
+    base_band_phasor = np.exp(-4j * np.pi * range_bins * 4.3e9 / 299792458)
+    base_band_phasor = np.tile(base_band_phasor, (len(cutoff_scans), 1)) # Add dimension to match scans shape
+    shiftedHilbert_data = cutoff_scans * base_band_phasor
+
     # Interpoalte scan times into mocap positions
-    positions = motion_capture_extraction.intepolate_positions(slow_times, entry_mocap_path.get(), float(slow_time_slider.get()))
+    
+    scatter_1_pos = list(map(float, entry_scatter_1.get().split(","))) # Get scatterer positions from entry field
+    scatter_2_pos = list(map(float, entry_scatter_2.get().split(",")))
+    scatters_pos = [scatter_1_pos, scatter_2_pos]
 
-    output = {
-        "scan_data": scans,
+    slow_time_offset = float(slow_time_slider.get())
+
+    dir_path = f"pickleoutputs/{local_json_path[6:-5]}"
+    if os.path.isdir(dir_path):
+        os.remove(dir_path)
+    os.makedirs(dir_path) # Create directory for pickle outputs
+    print(f"Outputing to {dir_path}")
+
+    for i in range(16):
+        positions = motion_capture_extraction.intepolate_positions(cutoff_slow_times, entry_mocap_path.get(), slow_time_offset + (i-8)/20) # Interpolate positions from mocap file
+        output = {
+        "scan_data": shiftedHilbert_data,
         "platform_pos": positions,
-        "range_bins": range_bins
-    }
+        "range_bins": range_bins,
+        "scatters_pos": scatters_pos
+        }
 
-    print(f"Outputed to pickleoutputs/{local_json_path[6:-5]}.pkl") # Get file name only from json path
-    with open(f"pickleoutputs/{local_json_path[6:-5]}.pkl", "wb") as f:
-        pickle.dump(output, f)
+        with open(f"{dir_path}/{slow_time_offset + (i-5)/10}.pkl", "wb") as f:
+            pickle.dump(output, f)
 
 def _quit():
     """ 
@@ -284,7 +325,7 @@ if __name__ == "__main__":
 
     root = tk.Tk()
     root.title("RTI GUI")
-    root.geometry("1180x630")
+    root.geometry("1250x630")
 
     # TKinter elements
     config_frame = tk.Frame(root, borderwidth=2, relief="groove") # Setup frame for config
@@ -352,7 +393,7 @@ if __name__ == "__main__":
     RTI_frame = tk.Frame(root, borderwidth=2, relief="groove")
     RTI_frame.pack(side='left', fill='both', expand=True, padx=5, pady=5)
     RTI_title = tk.Label(RTI_frame, text="RTI", font=("Arial", 16))
-    RTI_title.grid(row=0, column=0, sticky='ew')
+    RTI_title.grid(row=0, column=1, sticky='ew')
     RTI_frame.grid_columnconfigure(0, weight=1)
 
     # Create frame for buttons

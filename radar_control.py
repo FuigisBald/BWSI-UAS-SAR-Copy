@@ -29,7 +29,7 @@ def setup(
     transmit_gain,
     code_channel,
     persist_flag,
-    scan_start=18346, #2.75m offset,
+    scan_start=0, #3m offset
 
 ):
     """
@@ -182,10 +182,15 @@ def radar_control(
     )
     message_id += 1
 
-    control_stop_confirm = P452_udp.udp_receive()
-    if control_stop_confirm[-1] != 0:
-        print(f"Error status recieved when stopping scans after recieveing data, see response: {control_stop_confirm}")
-        return
+    while True:
+        try:
+            control_stop_confirm = P452_udp.udp_receive()
+            if control_stop_confirm[-1] == 0:
+                break
+        except:
+            continue   
+
+    P452_udp.close_socket()
 
     datetime = time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime())
 
@@ -213,4 +218,3 @@ if __name__ == "__main__":
         persist_flag=args.persist_flag,
     )
     radar_control(scan_start=scan_start, scan_end=scan_end, message_id=message_id, slow_time_end=args.slow_time_end)
-    P452_udp.close_socket()
